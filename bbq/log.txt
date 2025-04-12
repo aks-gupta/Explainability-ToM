@@ -1,0 +1,6 @@
+TaskQA-gpt-4o-mini-cot 0.0 minutes
+TaskQA-gpt-4o-mini-posthoc 0.0 minutes
+SimQG-gpt-4o-mini-cot-gpt-4o-mini-1.0-True 2.0 minutes
+SimQG-gpt-4o-mini-cot-gpt-4o-mini-1.0-False 3.0 minutes
+SimQG-gpt-4o-mini-posthoc-gpt-4o-mini-1.0-True 2.0 minutes
+SimQG-gpt-4o-mini-posthoc-gpt-4o-mini-1.0-False 2.0 minutes
