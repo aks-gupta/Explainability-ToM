@@ -1,0 +1,16 @@
+##For top 100 data:##
+
+Precision:
+gpt-4o-mini cot 76.7
+gpt-4o-mini posthoc 77.9
+
+Generality
+-> Bleu 
+[('gpt-4o-mini', 'cot'), ('gpt-4o-mini', 'posthoc')]
+0.784,0.807
+-> Cosine 
+[('gpt-4o-mini', 'cot'), ('gpt-4o-mini', 'posthoc')]
+0.368,0.382
+-> Jaccard
+[('gpt-4o-mini', 'cot'), ('gpt-4o-mini', 'posthoc')]
+0.68,0.703
