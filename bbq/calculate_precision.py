@@ -7,7 +7,9 @@ from scipy.stats import ttest_ind, ttest_rel
 
 
 if __name__ == '__main__':
-	EX_IDXS = range(0,10)
+	DOMAIN = 'genderIdentity'
+	NUM_EX = 100
+	EX_IDXS = range(0,NUM_EX)
 	simqg_model = 'mix'
 	top_p = 1.0
 	simqa_model = 'gpt-4o-mini'
@@ -20,8 +22,9 @@ if __name__ == '__main__':
 			setting = (taskqa_model, taskqa_expl_type)
 			setting2exidx2precision[setting] = {}
 			exidx2qns_simans = pkl.load(
-				open(f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}_age_10.pkl', 'rb'))
-				# open(f'../outputs/taskqa_gpt-4o-mini_cot-simqg_mix_1.0_True-taskqa_gpt-4o-mini_cot_25.pkl', 'rb'))
+				open(f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
+			print(f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}_{DOMAIN}_{NUM_EX}.pkl')
+				# open(f'../outputs_{DOMAIN}/taskqa_gpt-4o-mini_cot-simqg_mix_1.0_True-taskqa_gpt-4o-mini_cot_25.pkl', 'rb'))
 			# exidx2qns_simans = {exidx: [str(qn_ann['pred_ans']) for qn_ann in exidx2qns_simans[exidx]]
 			# 					for exidx in exidx2qns_simans}
 			exidx2qns_simans = {
@@ -30,8 +33,8 @@ if __name__ == '__main__':
 			}
 
 			exidx2qns_taskans = pkl.load(
-				open(f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-taskqa_{taskqa_model}_{taskqa_expl_type}_age_10.pkl', 'rb'))
-				# open(f'./outputs/taskqa_gpt-4o-mini_cot-simqg_mix_1.0_True-simqa_gpt-4o-mini_fix_test_25.pkl', 'rb'))
+				open(f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-taskqa_{taskqa_model}_{taskqa_expl_type}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
+				# open(f'./outputs_{DOMAIN}/taskqa_gpt-4o-mini_cot-simqg_mix_1.0_True-simqa_gpt-4o-mini_fix_test_25.pkl', 'rb'))
 			exidx2qns_taskans = {exidx: [str(qn_ann['pred_ans']) for qn_ann in exidx2qns_taskans[exidx]]
 								 for exidx in exidx2qns_taskans}
 			for exidx in EX_IDXS:
@@ -40,7 +43,7 @@ if __name__ == '__main__':
 				for qnidx in range(len(exidx2qns_simans[exidx])):
 					simqa_ann = exidx2qns_simans[exidx][qnidx]
 					taskqa_pred = exidx2qns_taskans[exidx][qnidx]
-					if simqa_ann in ['0', '1']:
+					if simqa_ann in ['0', '1', '2']:
 						ex_simulatable_count += 1
 						if simqa_ann == taskqa_pred:
 							ex_correct_simul_count += 1

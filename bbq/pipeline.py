@@ -23,15 +23,15 @@ def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
 	assert type(preds) == list and len(preds) == len(ex_idxs)
 	for pos, ex_idx in enumerate(ex_idxs):
 		all_preds[ex_idx] = preds[pos]
-	assert out_file.endswith('_{NUM_EX}.pkl')
+	# assert out_file.endswith('_{NUM_EX}.pkl')
 	pkl.dump(all_preds, open(out_file, 'wb'))
 	
 
 if __name__ == '__main__':
 	f_log = open('log.txt', 'w')
 	timestamp = time.time()
-	DOMAIN = 'age'
-	NUM_EX = 500
+	DOMAIN = 'raceEthnicity'
+	NUM_EX = 100
 	EX_IDXS = range(0, NUM_EX)
 	
 	#Task QA
@@ -41,7 +41,7 @@ if __name__ == '__main__':
 		for taskqa_expl_type in ['cot', 'posthoc']:
 			print(f"Explanation Type: {taskqa_expl_type}")
 			print(f"Line Number: {sys._getframe().f_lineno}")
-			out_file = f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}_{DOMAIN}_{NUM_EX}.pkl'
+			out_file = f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}_{DOMAIN}_{NUM_EX}.pkl'
 			print(out_file)
 			run_task_save_results(task_function=task_qa, out_file=out_file, ex_idxs=EX_IDXS,
 									model=taskqa_model, expl_type=taskqa_expl_type, inputs=test_inputs)
@@ -56,9 +56,9 @@ if __name__ == '__main__':
 			for simqg_model in ['gpt-4o-mini']:
 				for with_context in [True, False]:
 					for top_p in [1.0]:
-						out_file = f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl'
+						out_file = f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl'
 						orig_inputs = json.load(open('./data_bbq.json'))['age']
-						orig_tm_preds = pkl.load(open(f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
+						orig_tm_preds = pkl.load(open(f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
 						run_task_save_results(task_function=simulate_qg, ex_idxs=EX_IDXS, out_file=out_file,
 												model=simqg_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
 												top_p=top_p, num_samples=6, with_context=with_context)
@@ -75,9 +75,9 @@ if __name__ == '__main__':
 					# for simqg_model in ['gpt-4o', 'gpt-4o-mini']:
 					for simqg_model in ['gpt-4o-mini']:
 						simqg_model2sim_inputs[simqg_model] = pkl.load(
-							open(f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
-						print(f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl')
-					out_file = f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_mix_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl'
+							open(f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
+						print(f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl')
+					out_file = f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_mix_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl'
 					if os.path.exists(out_file):
 						ex_idx2mixed_sim_inputs = pkl.load(open(out_file, 'rb'))
 					else:
@@ -98,11 +98,11 @@ if __name__ == '__main__':
 					for top_p in [1.0]:
 						# for simqa_model in ['gpt-4o-mini', 'gpt-4o']:
 						for simqa_model in ['gpt-4o-mini']:
-							out_file = f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}_{DOMAIN}_{NUM_EX}.pkl'
+							out_file = f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}_{DOMAIN}_{NUM_EX}.pkl'
 							orig_inputs = json.load(open('data_bbq.json'))['age']
-							orig_tm_preds = pkl.load(open(f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
+							orig_tm_preds = pkl.load(open(f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
 							sim_inputs_list = pkl.load(open(
-								f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
+								f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
 							run_task_save_results(task_function=simulate_qa, ex_idxs=EX_IDXS, out_file=out_file,
 												model=simqa_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
 												sim_inputs_list=sim_inputs_list)
@@ -115,10 +115,10 @@ if __name__ == '__main__':
 			for simqg_model in ['mix']:
 				for with_context in [True, False]:
 					for top_p in [1.0]:
-						out_file = f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}' \
+						out_file = f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}' \
 									f'-taskqa_{taskqa_model}_{taskqa_expl_type}_{DOMAIN}_{NUM_EX}.pkl'
 						sim_inputs_list = pkl.load(open(
-							f'./outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
+							f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
 						run_task_save_results(task_function=task_qa_sim_inputs_list, ex_idxs=EX_IDXS, out_file=out_file,
 												model=taskqa_model, expl_type=taskqa_expl_type, sim_inputs_list=sim_inputs_list)
 						f_log.write(f'TaskQA-{taskqa_model}-{taskqa_expl_type}-{simqg_model}-{top_p}-{with_context} {(time.time() - timestamp)//60} minutes\n')
