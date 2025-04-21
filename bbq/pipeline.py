@@ -30,12 +30,12 @@ def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
 if __name__ == '__main__':
 	f_log = open('log.txt', 'w')
 	timestamp = time.time()
-	DOMAIN = 'raceEthnicity'
-	NUM_EX = 100
+	DOMAIN = 'age'
+	NUM_EX = 10
 	EX_IDXS = range(0, NUM_EX)
 	
 	#Task QA
-	for taskqa_model in ['gpt-4o-mini']:
+	for taskqa_model in ['gpt-4o']:
 		print(f"Using model: {taskqa_model}")		
 		test_inputs = json.load(open('data_bbq.json'))[DOMAIN]
 		for taskqa_expl_type in ['cot', 'posthoc']:
@@ -49,11 +49,11 @@ if __name__ == '__main__':
 			timestamp = time.time()
 
 	#SimQG
-	for taskqa_model in ['gpt-4o-mini']:
+	for taskqa_model in ['gpt-4o']:
 		print("LINE 48")
 		for taskqa_expl_type in ['cot', 'posthoc']:
-			# for simqg_model in ['gpt-4o', 'gpt-4o-mini']:
-			for simqg_model in ['gpt-4o-mini']:
+			for simqg_model in ['gpt-4o', 'gpt-4o-mini']:
+			# for simqg_model in ['gpt-4o']:
 				for with_context in [True, False]:
 					for top_p in [1.0]:
 						out_file = f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl'
@@ -66,14 +66,14 @@ if __name__ == '__main__':
 						timestamp = time.time()
 
 	# mix GPT-3 and GPT-4 outputs
-	for taskqa_model in ['gpt-4o-mini']:
+	for taskqa_model in ['gpt-4o']:
 		print("LINE 66")
 		for taskqa_expl_type in ['cot', 'posthoc']:
 			for with_context in [True, False]:
 				for top_p in [1.0]:
 					simqg_model2sim_inputs = {}
-					# for simqg_model in ['gpt-4o', 'gpt-4o-mini']:
-					for simqg_model in ['gpt-4o-mini']:
+					for simqg_model in ['gpt-4o', 'gpt-4o-mini']:
+					# for simqg_model in ['gpt-4o']:
 						simqg_model2sim_inputs[simqg_model] = pkl.load(
 							open(f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
 						print(f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl')
@@ -84,20 +84,20 @@ if __name__ == '__main__':
 						ex_idx2mixed_sim_inputs = {}
 					for ex_idx in EX_IDXS:
 						if ex_idx not in ex_idx2mixed_sim_inputs: # should not re-run for already computed mix ones because this process is random!
-							ex_idx2mixed_sim_inputs[ex_idx] = mix_sim_inputs(simqg_model2sim_inputs['gpt-4o-mini'][ex_idx],
+							ex_idx2mixed_sim_inputs[ex_idx] = mix_sim_inputs(simqg_model2sim_inputs['gpt-4o'][ex_idx],
 																				simqg_model2sim_inputs['gpt-4o-mini'][ex_idx],
 																				sample_num=6)
 					pkl.dump(ex_idx2mixed_sim_inputs, open(out_file, 'wb'))
 
 	# SimQA
-	for taskqa_model in ['gpt-4o-mini']:
+	for taskqa_model in ['gpt-4o']:
 		print("LINE 90")
 		for taskqa_expl_type in ['cot', 'posthoc']:
 			for simqg_model in ['mix']: # expl
-				for with_context in [True]:
+				for with_context in [True, False]:
 					for top_p in [1.0]:
-						# for simqa_model in ['gpt-4o-mini', 'gpt-4o']:
-						for simqa_model in ['gpt-4o-mini']:
+						for simqa_model in ['gpt-4o-mini', 'gpt-4o']:
+						# for simqa_model in ['gpt-4o']:
 							out_file = f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}_{DOMAIN}_{NUM_EX}.pkl'
 							orig_inputs = json.load(open('data_bbq.json'))['age']
 							orig_tm_preds = pkl.load(open(f'./outputs_{DOMAIN}/taskqa_{taskqa_model}_{taskqa_expl_type}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
@@ -110,7 +110,7 @@ if __name__ == '__main__':
 						timestamp = time.time()
 
 	# TaskQA on SimInputs
-	for taskqa_model in ['gpt-4o-mini']:
+	for taskqa_model in ['gpt-4o']:
 		for taskqa_expl_type in ['cot', 'posthoc']:
 			for simqg_model in ['mix']:
 				for with_context in [True, False]:

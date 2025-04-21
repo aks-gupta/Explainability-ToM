@@ -10,8 +10,8 @@ import time
 import os
 
 client = openai.OpenAI(
-    api_key=os.environ.get("LITELLM_API_KEY"),
-    base_url="https://cmu.litellm.ai",
+    api_key=os.environ.get("OPENAI_API_KEY"),
+    # base_url="https://cmu.litellm.ai",
 )
 
 def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p=1.0, max_tokens=200, stop=None):

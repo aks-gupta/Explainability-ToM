@@ -7,17 +7,17 @@ from scipy.stats import ttest_ind, ttest_rel
 
 
 if __name__ == '__main__':
-	DOMAIN = 'genderIdentity'
-	NUM_EX = 100
+	DOMAIN = 'age'
+	NUM_EX = 10
 	EX_IDXS = range(0,NUM_EX)
 	simqg_model = 'mix'
 	top_p = 1.0
-	simqa_model = 'gpt-4o-mini'
-	with_context = True
+	simqa_model = 'gpt-4o'
+	with_context = False
 
 	setting2exidx2precision = {}
 	# for taskqa_model in ['gpt3', 'gpt4']:
-	for taskqa_model in ['gpt-4o-mini']:
+	for taskqa_model in ['gpt-4o']:
 		for taskqa_expl_type in ['cot', 'posthoc']:
 			setting = (taskqa_model, taskqa_expl_type)
 			setting2exidx2precision[setting] = {}
