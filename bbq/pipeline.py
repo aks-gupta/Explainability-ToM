@@ -51,7 +51,8 @@ if __name__ == '__main__':
 	#SimQG
 	for taskqa_model in ['gpt-4o']:
 		print("LINE 48")
-		for taskqa_expl_type in ['cot', 'posthoc']:
+		# for taskqa_expl_type in ['cot', 'posthoc']:
+		for taskqa_expl_type in ['cot']:
 			for simqg_model in ['gpt-4o', 'gpt-4o-mini']:
 			# for simqg_model in ['gpt-4o']:
 				for with_context in [True, False]:
@@ -68,7 +69,8 @@ if __name__ == '__main__':
 	# mix GPT-3 and GPT-4 outputs
 	for taskqa_model in ['gpt-4o']:
 		print("LINE 66")
-		for taskqa_expl_type in ['cot', 'posthoc']:
+		# for taskqa_expl_type in ['cot', 'posthoc']:
+		for taskqa_expl_type in ['cot']:
 			for with_context in [True, False]:
 				for top_p in [1.0]:
 					simqg_model2sim_inputs = {}
@@ -92,7 +94,8 @@ if __name__ == '__main__':
 	# SimQA
 	for taskqa_model in ['gpt-4o']:
 		print("LINE 90")
-		for taskqa_expl_type in ['cot', 'posthoc']:
+		# for taskqa_expl_type in ['cot', 'posthoc']:
+		for taskqa_expl_type in ['cot']:
 			for simqg_model in ['mix']: # expl
 				for with_context in [True, False]:
 					for top_p in [1.0]:
@@ -111,7 +114,8 @@ if __name__ == '__main__':
 
 	# TaskQA on SimInputs
 	for taskqa_model in ['gpt-4o']:
-		for taskqa_expl_type in ['cot', 'posthoc']:
+		# for taskqa_expl_type in ['cot', 'posthoc']:
+		for taskqa_expl_type in ['cot']:
 			for simqg_model in ['mix']:
 				for with_context in [True, False]:
 					for top_p in [1.0]:

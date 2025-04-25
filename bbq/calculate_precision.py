@@ -13,12 +13,13 @@ if __name__ == '__main__':
 	simqg_model = 'mix'
 	top_p = 1.0
 	simqa_model = 'gpt-4o'
-	with_context = False
+	with_context = True
 
 	setting2exidx2precision = {}
 	# for taskqa_model in ['gpt3', 'gpt4']:
 	for taskqa_model in ['gpt-4o']:
-		for taskqa_expl_type in ['cot', 'posthoc']:
+		# for taskqa_expl_type in ['cot', 'posthoc']:
+		for taskqa_expl_type in ['cot']:
 			setting = (taskqa_model, taskqa_expl_type)
 			setting2exidx2precision[setting] = {}
 			exidx2qns_simans = pkl.load(

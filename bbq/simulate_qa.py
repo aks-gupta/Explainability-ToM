@@ -47,7 +47,7 @@ def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list):
     num_examples = len(orig_inputs)
     
     # Create prompts using BBQ-specific format
-    prompts = get_prompts_by_task('bbq-simqa-fix',
+    prompts = get_prompts_by_task('bbq-simqa-expl',
                                   [{'starter_context': orig_input['context'],
                                     'starter_question': orig_input['question'],
                                     'starter_options': orig_input['options'],
