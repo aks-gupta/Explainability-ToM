@@ -46,7 +46,7 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
     num_examples = len(orig_inputs)
     # For simqg, we use the "almanacs-simqg" prompt template.
     prompts = get_prompts_by_task(
-        'almanacs-simqg',
+        'almanacs-simqg-new',
         [{
             'context': orig_input['context'],
             'explanation': orig_tm_pred['pred_expl']

@@ -6,22 +6,23 @@ import pickle as pkl
 from scipy.stats import ttest_ind, ttest_rel
 
 if __name__ == '__main__':
-    EX_IDXS = range(50)
-    simqg_model = 'gpt-4o-mini'
+    EX_IDXS = range(30)
+    simqg_model = 'gpt-4o'
     top_p = 1.0
-    simqa_model = 'gpt-4o-mini'
+    simqa_model = 'gpt-4o'
     with_context = True
+    cue = 'nontoxic'
 
     setting2exidx2precision = {}
     # for taskqa_model in ['gpt3', 'gpt4']:
-    for taskqa_model in ['gpt-4o-mini']:
-        for taskqa_expl_type in ['cot', 'posthoc']:
+    for taskqa_model in ['gpt-4o']:
+        for taskqa_expl_type in ['cot']:
             setting = (taskqa_model, taskqa_expl_type)
             setting2exidx2precision[setting] = {}
             # Load simQA predictions (these come from your simqa stage)
             exidx2qns_simans = pkl.load(
                 # Use your appropriate file path. Here it is:
-                open(f'./outputs/taskqa_gpt-4o-mini_cot-simqg_mix_1.0_True-taskqa_gpt-4o-mini_cot_test_50.pkl', 'rb'))
+                open(f'./outputs/taskqa_gpt-4o_cot-simqg_mix_1.0_True-taskqa_gpt-4o_cot_{cue}_test_50.pkl', 'rb')) #noexpl
             # Convert the predictions so that for each example, we have a list of predicted answers as strings.
             exidx2qns_simans = {
                 exidx: [str(qn_ann['pred_ans']) for qn_ann in qn_anns]
@@ -29,7 +30,7 @@ if __name__ == '__main__':
             }
             # Load TaskQA predictions (which here come from your fix stage)
             exidx2qns_taskans = pkl.load(
-                open(f'./outputs/taskqa_gpt-4o-mini_cot-simqg_mix_1.0_True-simqa_gpt-4o-mini_fix_test_50.pkl', 'rb'))
+                open(f'./outputs/taskqa_gpt-4o_cot-simqg_mix_1.0_True-simqa_gpt-4o_fix_{cue}_test_50.pkl', 'rb')) #noexpl
             exidx2qns_taskans = {
                 exidx: [str(qn_ann['pred_ans']) for qn_ann in exidx2qns_taskans[exidx]]
                 for exidx in exidx2qns_taskans

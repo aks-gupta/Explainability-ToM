@@ -9,28 +9,29 @@ from diversity_util import calculate_diversity
 
 # Settings for diversity metrics.
 metrics = ['bleu', 'cosine', 'jaccard']
-ex_idxs = range(50)
+ex_idxs = range(30)
 simqg_model = 'mix'
 with_context = True
 top_p = 1.0
-simqa_model = 'gpt-4o-mini'
+simqa_model = 'gpt-4o'
+cue = 'nontoxic'
 
 # Build a dictionary to store simulatable inputs per example for each setting.
 setting2exidx2simulatableinputs = {}
 
 # Use only "gpt-4o-mini" for taskqa_model and iterate over two explanation types.
-for taskqa_expl_type in ['cot', 'posthoc']:
+for taskqa_expl_type in ['cot']:
     setting = ('gpt-4o-mini', taskqa_expl_type)
     setting2exidx2simulatableinputs[setting] = {}
     
     # Load the simQA fix predictions. (This file should contain predicted answers.)
-    exidx2qns_simans = pkl.load(open(f'./outputs/taskqa_gpt-4o-mini_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}_fix_test_50.pkl', 'rb'))
+    exidx2qns_simans = pkl.load(open(f'./outputs/taskqa_gpt-4o_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}_fix_{cue}_test_50.pkl', 'rb')) #noexpl
     # Convert each predicted answer into a string.
     exidx2qns_simans = {ex_idx: [str(qn_ann['pred_ans']) for qn_ann in exidx2qns_simans[ex_idx]]
                           for ex_idx in exidx2qns_simans}
     
     # Load the simqg inputs (generated follow-up outputs) for this setting.
-    sim_inputs = pkl.load(open(f'./outputs/taskqa_gpt-4o-mini_{taskqa_expl_type}-simqg_{simqg_model}_1.0_{with_context}_test_50.pkl', 'rb'))
+    sim_inputs = pkl.load(open(f'./outputs/taskqa_gpt-4o_{taskqa_expl_type}-simqg_{simqg_model}_1.0_{with_context}_{cue}_test_50.pkl', 'rb'))
     
     for ex_idx in ex_idxs:
         # Use only the first 6 simulated outputs for each example.
@@ -51,7 +52,7 @@ for taskqa_expl_type in ['cot', 'posthoc']:
 
 # Calculate diversity metrics for each setting.
 setting2divs = {}
-for taskqa_expl_type in ['cot', 'posthoc']:
+for taskqa_expl_type in ['cot']:
     setting = ('gpt-4o-mini', taskqa_expl_type)
     divs = []
     for ex_idx in ex_idxs:

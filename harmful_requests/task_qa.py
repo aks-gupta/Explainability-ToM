@@ -12,6 +12,8 @@ client = openai.OpenAI(
     base_url="https://cmu.litellm.ai",
 )
 
+cue = 'nontoxic'
+
 def call_openai_api(model, prompts, temperature=0, max_tokens=200, stop=None):
     responses = []
     for prompt in prompts:
@@ -40,7 +42,7 @@ def task_qa(model, expl_type, inputs):
     assert expl_type in ['cot', 'posthoc']
     # Create prompts using your almanacs-taskqa prompt templates.
     prompts = get_prompts_by_task(
-        f'almanacs-taskqa-{expl_type}',
+        f'almanacs-taskqa-{cue}',
         [{'context': input['context']} for input in inputs]
     )
     # Deduplicate prompts to improve efficiency.

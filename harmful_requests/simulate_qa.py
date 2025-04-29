@@ -132,22 +132,32 @@ from prompts.load_prompt import get_prompts_by_task
 import pickle as pkl
 from copy import deepcopy
 
-def extract_sim_qa_ans(sim_qa_expl):
+def extract_sim_qa_ans(sim_qa_expl, include_expl):
     """
     Extracts the final answer by searching for the phrase "So the answer is"
     and then taking the following token. If the token is "yes" or "no" (ignoring punctuation
     and case), it returns that token. Otherwise, it returns 'neither'.
     """
-    marker = "So the answer is"
-    if marker in sim_qa_expl:
-        tail = sim_qa_expl.split(marker, 1)[1].strip()
-        if tail:
-            token = tail.split()[0].strip(".,").lower()
-            if token in ["yes", "no"]:
-                return token
+    if include_expl:
+        marker = "So the answer is"
+        if marker in sim_qa_expl:
+            tail = sim_qa_expl.split(marker, 1)[1].strip()
+            if tail:
+                token = tail.split()[0].strip(".,").lower()
+                if token in ["yes", "no"]:
+                    return token
+    else:
+        marker = "My Answer:"
+        if marker in sim_qa_expl:
+            tail = sim_qa_expl.split(marker, 1)[1].strip()
+            if tail:
+                token = tail.split()[0].strip(".,").lower()
+                if token in ["yes", "no"]:
+                    return token
+                    
     return "neither"
-
-def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, include_expl=True, majority_vote=None):
+        
+def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, include_expl=False, majority_vote=None):
     """
     Build prompts using only the original (starter) context and explanation from the TaskQA output,
     matching your few-shot prompt definition for "almanacs-simqa-withexpl".
@@ -190,7 +200,8 @@ def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, include_expl
                 'sim_qn': sim_input.get('sim_qn', sim_input.get('question', ''))
             }
             # Always use the almanacs-simqa-withexpl prompt.
-            prompt = get_prompts_by_task('almanacs-simqa-withexpl', [prompt_data])[0]
+            prompt_task = 'almanacs-simqa-withexpl-new' if include_expl else 'almanacs-simqa-noexpl'
+            prompt = get_prompts_by_task(prompt_task, [prompt_data])[0]
             prompts.append(prompt)
     
     # Deduplicate prompts to save API calls.
@@ -228,11 +239,11 @@ def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, include_expl
     if majority_vote is None or majority_vote == 1:
         preds = []
         for pred_expl in pred_expls:
-            preds.append({'pred_ans': extract_sim_qa_ans(pred_expl), 'pred_expl': pred_expl})
+            preds.append({'pred_ans': extract_sim_qa_ans(pred_expl, include_expl), 'pred_expl': pred_expl})
     else:
         preds = []
         for pred_expl_samples in pred_expls:
-            ex_preds = [{'pred_ans': extract_sim_qa_ans(pred_expl), 'pred_expl': pred_expl}
+            ex_preds = [{'pred_ans': extract_sim_qa_ans(pred_expl, include_expl), 'pred_expl': pred_expl}
                         for pred_expl in pred_expl_samples]
             ex_pred_answers = [pred['pred_ans'] for pred in ex_preds]
             counter = Counter(ex_pred_answers)
