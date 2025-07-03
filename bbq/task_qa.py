@@ -10,7 +10,7 @@ import re
 
 client = openai.OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
-    # base_url="https://cmu.litellm.ai",
+    base_url="https://cmu.litellm.ai",
 )
 
 def call_openai_api(model, prompts, temperature=0, max_tokens=200, stop=None):
@@ -31,9 +31,9 @@ def call_openai_api(model, prompts, temperature=0, max_tokens=200, stop=None):
             time.sleep(1)
     return responses
 
-def task_qa(model, expl_type, inputs):
+def task_qa(model, expl_type, inputs, domain):
     assert expl_type in ['cot', 'posthoc']
-    prompts = get_prompts_by_task(f'bbq-taskqa-{expl_type}',
+    prompts = get_prompts_by_task(f'bbq-taskqa-{expl_type}-nontoxic_{domain}',
                 [{'context': input['context'],
                   'question': input['question'], 
                   'options': input['options']}
@@ -84,9 +84,10 @@ def task_qa(model, expl_type, inputs):
     
     return answers
 
-def task_qa_sim_inputs_list(model, expl_type, sim_inputs_list):
+def task_qa_sim_inputs_list(model, expl_type, sim_inputs_list, domain):
+    print("Just printing domain:", domain)
     all_sim_inputs = [input for sim_inputs in sim_inputs_list for input in sim_inputs]
-    preds = task_qa(model, expl_type, all_sim_inputs)
+    preds = task_qa(model, expl_type, all_sim_inputs, domain)
     # regroup preds according to examples (multiple simulation inputs for each original input)
     example_preds = []
     cur = 0

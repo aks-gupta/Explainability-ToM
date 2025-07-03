@@ -1,6 +1,11 @@
-TaskQA-gpt-4o-mini-cot 0.0 minutes
-TaskQA-gpt-4o-mini-posthoc 0.0 minutes
-SimQG-gpt-4o-mini-cot-gpt-4o-mini-1.0-True 2.0 minutes
-SimQG-gpt-4o-mini-cot-gpt-4o-mini-1.0-False 3.0 minutes
-SimQG-gpt-4o-mini-posthoc-gpt-4o-mini-1.0-True 2.0 minutes
-SimQG-gpt-4o-mini-posthoc-gpt-4o-mini-1.0-False 2.0 minutes
+TaskQA-gpt-4o-cot 1.0 minutes
+SimQG-gpt-4o-cot-gpt-4o-1.0-True 6.0 minutes
+SimQG-gpt-4o-cot-gpt-4o-1.0-False 6.0 minutes
+SimQG-gpt-4o-cot-gpt-4o-mini-1.0-True 5.0 minutes
+SimQG-gpt-4o-cot-gpt-4o-mini-1.0-False 5.0 minutes
+SimQA-gpt-4o-cot-mix-1.0-True-gpt-4o-mini 6.0 minutes
+SimQA-gpt-4o-cot-mix-1.0-True-gpt-4o 13.0 minutes
+SimQA-gpt-4o-cot-mix-1.0-False-gpt-4o-mini 6.0 minutes
+SimQA-gpt-4o-cot-mix-1.0-False-gpt-4o 13.0 minutes
+TaskQA-gpt-4o-cot-mix-1.0-True 13.0 minutes
+TaskQA-gpt-4o-cot-mix-1.0-False 11.0 minutes

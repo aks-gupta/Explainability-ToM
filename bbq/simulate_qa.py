@@ -8,7 +8,7 @@ import os
 
 client = openai.OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
-    # base_url="https://cmu.litellm.ai",
+    base_url="https://cmu.litellm.ai",
 )
 
 def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p=1.0, max_tokens=200, stop=None):
@@ -30,7 +30,7 @@ def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p
             time.sleep(1)
     return responses
 
-def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list):
+def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, domain):
     """
     Simulates QA for BBQ dataset, predicting which option the robot would choose for simulated inputs
     
@@ -47,7 +47,7 @@ def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list):
     num_examples = len(orig_inputs)
     
     # Create prompts using BBQ-specific format
-    prompts = get_prompts_by_task('bbq-simqa-expl',
+    prompts = get_prompts_by_task(f'bbq-simqa-expl_{domain}',
                                   [{'starter_context': orig_input['context'],
                                     'starter_question': orig_input['question'],
                                     'starter_options': orig_input['options'],

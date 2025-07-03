@@ -11,7 +11,7 @@ import os
 
 client = openai.OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
-    # base_url="https://cmu.litellm.ai",
+    base_url="https://cmu.litellm.ai",
 )
 
 def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p=1.0, max_tokens=200, stop=None):
@@ -34,7 +34,7 @@ def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p
     return responses
 
 
-def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context):
+def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context, domain):
     """
     Generate simulated BBQ examples using a language model.
     
@@ -54,7 +54,7 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
     num_examples = len(orig_inputs)
     
     # Prepare prompt inputs
-    prompt_task = 'bbq-simqg-withcontext' if with_context else 'bbq-simqg-nocontext'
+    prompt_task = f'bbq-simqg-withcontext_{domain}' if with_context else f'bbq-simqg-nocontext_{domain}'
     prompt_inputs = []
     
     for orig_input, orig_tm_pred in zip(orig_inputs, orig_tm_preds):

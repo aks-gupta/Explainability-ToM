@@ -14,7 +14,7 @@ def _embed_prompt(
 
 
 def get_prompts_by_task(task, test_examples):
-    prompt = json.load(open(os.path.join(os.path.dirname(__file__), 'prompts.json')))[task]
+    prompt = json.load(open(os.path.join(os.path.dirname(__file__), 'prompts_bbq.json')))[task]
     # if len(test_examples) > 0:
     #     print(_embed_prompt(prompt['instruction'], prompt['template_with_label'],
     #                           prompt['template_no_label'], prompt['dem_examples'], test_examples[0]))
