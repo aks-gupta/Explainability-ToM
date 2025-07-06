@@ -19,7 +19,8 @@ def get_prompts_by_task(task, test_examples):
     #     print(_embed_prompt(prompt['instruction'], prompt['template_with_label'],
     #                           prompt['template_no_label'], prompt['dem_examples'], test_examples[0]))
     #     exit()
-    return [_embed_prompt(prompt['instruction'], prompt['template_with_label'],
+    final_prompt = [_embed_prompt(prompt['instruction'], prompt['template_with_label'],
                           prompt['template_no_label'], prompt['dem_examples'], test_example)
             for test_example in test_examples]
+    return final_prompt
 

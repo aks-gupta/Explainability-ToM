@@ -9,60 +9,50 @@ import os
 print(os.getcwd())
 
 if __name__ == '__main__':
-	EX_IDXS = range(0,100)
-	simqg_model = 'gpt-4o-mini'
+	EX_IDXS = range(0,180)
+	simqg_model = 'gpt-4o'
 	top_p = 1.0
-	simqa_model = 'gpt-4o-mini'
+	simqa_model = 'gpt-4o'
 	with_context = True
 
 	setting2exidx2precision = {}
-	# for taskqa_model in ['gpt3', 'gpt4']:
-	for taskqa_model in ['gpt-4o-mini']:
-		for taskqa_expl_type in ['cot', 'posthoc']:
-			print("-------" + str(taskqa_expl_type) + "--------")
-			setting = (taskqa_model, taskqa_expl_type)
-			setting2exidx2precision[setting] = {}
-			exidx2qns_simans = pkl.load(
-				# open(f'../outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}.pkl', 'rb'))
-				open(f'./outputs/taskqa_hiring_decisions_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}-simqa_{simqa_model}_fix_test_1.pkl', 'rb'))
-			# exidx2qns_simans = {exidx: [str(qn_ann['pred_ans']) for qn_ann in exidx2qns_simans[exidx]]
-			# 					for exidx in exidx2qns_simans}
-			exidx2qns_simans = {
-				exidx: [str(qn_ann['pred_ans']) for qn_ann in qn_anns]
-				for exidx, qn_anns in exidx2qns_simans.items()
-			}
-			# print(exidx2qns_simans)
-			exidx2qns_taskans = pkl.load(
-				# open(f'../outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-taskqa_{taskqa_model}_{taskqa_expl_type}.pkl', 'rb'))
-				open(f'./outputs/taskqa_hiring_decisions_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}-taskqa_{taskqa_model}_{taskqa_expl_type}_1.pkl', 'rb'))
-			exidx2qns_taskans = {exidx: [str(qn_ann['pred_ans']) for qn_ann in exidx2qns_taskans[exidx]]
-								 for exidx in exidx2qns_taskans}
-			# print(exidx2qns_taskans)
-			for exidx in EX_IDXS:
+	for taskqa_model in ['gpt-4o']:
+		for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+			for explanation in ['withexpl']:
+				print("-------" + str(taskqa_expl_type) + "--------")
+				print(explanation)
+				setting = (taskqa_model, taskqa_expl_type)
+				setting2exidx2precision[setting] = {}
+				exidx2qns_simans = pkl.load(
+					# open(f'../outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}.pkl', 'rb'))
+					open(f'./outputs/final/simulation_model/taskqa_hiring_decisions_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}-simqa_{simqa_model}_{explanation}_fix_test_180_CHECK_CHECK.pkl', 'rb'))
+
+				for exidx in exidx2qns_simans:
+					exidx2qns_simans[exidx] = [
+						str(exidx2qns_simans[exidx]['pred_ans']) 
+					]
+
+				exidx2qns_taskans = pkl.load(
+					# open(f'../outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-taskqa_{taskqa_model}_{taskqa_expl_type}.pkl', 'rb'))
+					open(f'./outputs/final/task_model/taskqa_hiring_decisions_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}-taskqa_{taskqa_model}_{explanation}_180_CHECK_CHECK.pkl', 'rb'))
+				for exidx in exidx2qns_taskans:
+					exidx2qns_taskans[exidx] =  [
+						str(exidx2qns_taskans[exidx]['pred_ans'])
+					]
+				
 				ex_simulatable_count, ex_correct_simul_count = 0, 0
-				assert len(exidx2qns_simans[exidx]) == len(exidx2qns_taskans[exidx])
-				for qnidx in range(len(exidx2qns_simans[exidx])):
-					simqa_ann = exidx2qns_simans[exidx][qnidx]
-					taskqa_pred = exidx2qns_taskans[exidx][qnidx]
+				for exidx in EX_IDXS:
+					simqa_ann = exidx2qns_simans[exidx][0]
+					taskqa_pred = exidx2qns_taskans[exidx][0]
 					if simqa_ann in ['no', 'yes']:
 						ex_simulatable_count += 1
 						if simqa_ann == taskqa_pred:
 							ex_correct_simul_count += 1
+				print(ex_correct_simul_count, ex_simulatable_count)
 				if ex_simulatable_count != 0:
-					setting2exidx2precision[setting][exidx] = ex_correct_simul_count / ex_simulatable_count
+					setting2exidx2precision[setting] =  ex_correct_simul_count / ex_simulatable_count
 
-	all_settings_exidxs = [setting2exidx2precision[setting].keys() for setting in setting2exidx2precision]
-	exidxs_in_all_settings = [exidx for exidx in all_settings_exidxs[0] if np.all([exidx in exidxs for exidxs in all_settings_exidxs])]
-	print(len(exidxs_in_all_settings))
-	setting2scores = {setting: [setting2exidx2precision[setting][exidx] for exidx in exidxs_in_all_settings]
-					  for setting in setting2exidx2precision}
-
-	settings = list(setting2scores.keys())
-	print(settings)
+	settings = list(setting2exidx2precision.keys())
 	for setting in settings:
-		print(' '.join(setting), round(np.mean(setting2scores[setting]) * 100, 1))
+		print(' '.join(setting), round(np.mean(setting2exidx2precision[setting]) * 100, 1))
 	print(">><<")
-	# for setting1 in settings:
-	# 	print(setting1)
-	# 	pvalues = [str(ttest_rel(setting2scores[setting1], setting2scores[setting2])[1]) for setting2 in settings]
-	# 	print(','.join(pvalues))
