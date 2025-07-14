@@ -5,15 +5,19 @@ import numpy as np
 import pickle as pkl
 from scipy.stats import ttest_ind, ttest_rel
 import os 
+from configs import GENERAL_CONFIGS
+from utilities import return_last_max_version
 
 print(os.getcwd())
 
 if __name__ == '__main__':
-	EX_IDXS = range(0,180)
+	num_examples = GENERAL_CONFIGS['num_examples']
+	EX_IDXS = range(0, num_examples)
 	simqg_model = 'gpt-4o'
 	top_p = 1.0
 	simqa_model = 'gpt-4o'
 	with_context = True
+	full_path = return_last_max_version()
 
 	setting2exidx2precision = {}
 	for taskqa_model in ['gpt-4o']:
@@ -23,18 +27,27 @@ if __name__ == '__main__':
 				print(explanation)
 				setting = (taskqa_model, taskqa_expl_type)
 				setting2exidx2precision[setting] = {}
+
+				step_3_out = f'{full_path}/{GENERAL_CONFIGS['step_3_out']}_{taskqa_model}_simqg_{simqg_model}_simqa_{simqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
 				exidx2qns_simans = pkl.load(
-					# open(f'../outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}.pkl', 'rb'))
-					open(f'./outputs/final/simulation_model/taskqa_hiring_decisions_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}-simqa_{simqa_model}_{explanation}_fix_test_180_CHECK_CHECK.pkl', 'rb'))
+					open(step_3_out, 'rb'))
+
+				# exidx2qns_simans = pkl.load(
+				# 	# open(f'../outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}.pkl', 'rb'))
+				# 	open(f'./outputs/final/simulation_model/taskqa_hiring_decisions_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}-simqa_{simqa_model}_{explanation}_fix_test_180_CHECK_CHECK.pkl', 'rb'))
 
 				for exidx in exidx2qns_simans:
 					exidx2qns_simans[exidx] = [
 						str(exidx2qns_simans[exidx]['pred_ans']) 
 					]
 
+				step_4_out = f'{full_path}/{GENERAL_CONFIGS['step_4_out']}_{taskqa_model}_simqg_{simqg_model}_taskqa_{taskqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
 				exidx2qns_taskans = pkl.load(
-					# open(f'../outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-taskqa_{taskqa_model}_{taskqa_expl_type}.pkl', 'rb'))
-					open(f'./outputs/final/task_model/taskqa_hiring_decisions_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}-taskqa_{taskqa_model}_{explanation}_180_CHECK_CHECK.pkl', 'rb'))
+					open(step_4_out, 'rb'))
+				
+				# exidx2qns_taskans = pkl.load(
+				# 	open(f'./outputs/final/task_model/taskqa_hiring_decisions_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}-taskqa_{taskqa_model}_{explanation}_180_CHECK_CHECK.pkl', 'rb'))
+				
 				for exidx in exidx2qns_taskans:
 					exidx2qns_taskans[exidx] =  [
 						str(exidx2qns_taskans[exidx]['pred_ans'])
