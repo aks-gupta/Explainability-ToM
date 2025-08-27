@@ -38,5 +38,5 @@ def create_folder_based_on_version():
 def return_last_max_version():
     folder_path = "almanacs/versioned_output"  # Change this to your folder path
     last_version = list_files_in_folder(folder_path)
-    file_name = f'v{last_version}'
+    file_name = f'v4' #switch to a targeted version, else= "f'v{last_version}'"
     return os.path.join(folder_path, file_name)

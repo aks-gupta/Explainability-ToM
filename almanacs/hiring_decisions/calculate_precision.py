@@ -18,6 +18,7 @@ if __name__ == '__main__':
 	simqa_model = 'gpt-4o'
 	with_context = True
 	full_path = return_last_max_version()
+	print(full_path)
 
 	setting2exidx2precision = {}
 	for taskqa_model in ['gpt-4o']:
@@ -54,6 +55,8 @@ if __name__ == '__main__':
 					]
 				
 				ex_simulatable_count, ex_correct_simul_count = 0, 0
+				unknown_count = 0
+				unknown_set = set()
 				for exidx in EX_IDXS:
 					simqa_ann = exidx2qns_simans[exidx][0]
 					taskqa_pred = exidx2qns_taskans[exidx][0]
@@ -61,7 +64,12 @@ if __name__ == '__main__':
 						ex_simulatable_count += 1
 						if simqa_ann == taskqa_pred:
 							ex_correct_simul_count += 1
+					else:
+						unknown_count += 1
+						unknown_set.add(simqa_ann)
 				print(ex_correct_simul_count, ex_simulatable_count)
+				print("Unknown count:", unknown_count)
+				print("Unknown set:", unknown_set)
 				if ex_simulatable_count != 0:
 					setting2exidx2precision[setting] =  ex_correct_simul_count / ex_simulatable_count
 

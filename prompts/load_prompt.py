@@ -6,21 +6,16 @@ def _embed_prompt(
 ):
     prompt = str(instruction)
     for dem in dem_examples:
-        prompt += template_with_label.format(**dem)
-
+        prompt += template_with_label.format(**dem) #Question for few shot prompting
     # prompt += template_no_label.format(**test_example).strip()
-    prompt += template_no_label.format(**test_example)
+    prompt += template_no_label.format(**test_example) #Question to ask
     return prompt
 
 
-def get_prompts_by_task(task, test_examples):
+def get_prompts_by_task(task, test_examples, k_shot=3):
     prompt = json.load(open(os.path.join(os.path.dirname(__file__), 'prompts.json')))[task]
-    # if len(test_examples) > 0:
-    #     print(_embed_prompt(prompt['instruction'], prompt['template_with_label'],
-    #                           prompt['template_no_label'], prompt['dem_examples'], test_examples[0]))
-    #     exit()
     final_prompt = [_embed_prompt(prompt['instruction'], prompt['template_with_label'],
-                          prompt['template_no_label'], prompt['dem_examples'], test_example)
+                          prompt['template_no_label'], prompt['dem_examples'][:k_shot], test_example)
             for test_example in test_examples]
     return final_prompt
 

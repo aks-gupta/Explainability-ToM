@@ -2,6 +2,7 @@ import json
 import sys
 sys.path.append('..')
 from prompts.load_prompt import get_prompts_by_task
+from configs import GENERAL_CONFIGS
 from openai import OpenAI
 import openai
 import time
@@ -56,19 +57,20 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 				annotated_examples=None):
 	assert len(orig_inputs) == len(orig_tm_preds) == len(sim_inputs_list)
 	num_examples = len(orig_inputs)
-
 	if annotated_examples is None:
 		if include_expl:
+			k_shot = GENERAL_CONFIGS['k_shot']
 			prompts = get_prompts_by_task('almanacs-hiring-decisions-simqa-withexpl',
 										  [{'orig_qn': orig_input['question'], 'orig_qa_tm_expl': orig_tm_pred['pred_expl'], 'sim_qn': sim_inputs}
-										   for orig_input, orig_tm_pred, sim_inputs in zip(orig_inputs, orig_tm_preds, sim_inputs_list)])
+										   for orig_input, orig_tm_pred, sim_inputs in zip(orig_inputs, orig_tm_preds, sim_inputs_list)], k_shot)
+			print(prompts)
 		else:
 			prompts = get_prompts_by_task('almanacs-hiring-decisions-simqa-withoutexpl',
 										  [{'orig_qn': orig_input['question'],
 											'orig_qa_tm_expl': orig_tm_pred['pred_expl'],
 											'sim_qn': sim_inputs}
 										   for orig_input, orig_tm_pred, sim_inputs in
-										   zip(orig_inputs, orig_tm_preds, sim_inputs_list)])
+										   zip(orig_inputs, orig_tm_preds, sim_inputs_list)], k_shot)
 	else:
 		assert len(orig_inputs) == len(annotated_examples)
 		task_prompt_with_expl = json.load(open('../../prompts/prompts.json'))['strategyqa-simqa-withexpl-mentioncot']

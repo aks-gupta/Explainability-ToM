@@ -90,7 +90,6 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 	# 	ex_sim_inputs = [ex_sim_inputs[idx] for idx in unique_idxs]
 	# 	example_siminputs.append(ex_sim_inputs)
 	# assert len(example_siminputs) == num_examples
-	print(final_sim_input)
 	return final_sim_input
 
 
