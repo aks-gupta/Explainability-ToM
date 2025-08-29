@@ -47,33 +47,25 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 								  [{'orig_qn': orig_input['question'], 'orig_qa_tm_expl': orig_tm_pred['pred_expl']}
 								   for orig_input, orig_tm_pred in zip(orig_inputs, orig_tm_preds)])
 	# repeat the prompts for self.num_samples times
-
-	# prompts = [prompt for prompt in prompts for _ in range(num_samples)]
-
-	# assert len(prompts) == num_examples * num_samples
-	# responses = multiprocess_api(model=model, prompts=prompts, bsz=20, num_processes=16 if model =='gpt3' else 10,
-	# 										  temperature=1, top_p=top_p, max_tokens=50, stop='\n\n')
+	prompts = [prompt for prompt in prompts for _ in range(num_samples)]
 	responses = call_openai_api(model=model, prompts=prompts, temperature=1, top_p=top_p, stop='\n\n')
-
-	# print(responses)
 
 	sim_inputs = []
 	for response in responses:
 		lines = response.split("\n")
-		# if len(lines) != 1 or not lines[0].strip().endswith("?"):
-		# 	print("here")
-		# 	sim_inputs.append(None)
-		# else:
-		# 	print("adding")
-		sim_inputs.append({'question': lines[0].strip()})
-
-	final_sim_input = []
-	for sim_input in sim_inputs:
+		sim_input = lines[0].strip()
 		if sim_input is not None:
-			if ('Follow-up Question:' in sim_input['question']):
-				final_sim_input.append(sim_input['question'].replace("Follow-up Question: ", ""))
-			else:
-				final_sim_input.append(sim_input)
+			sim_inputs.append(sim_input.replace("Follow-up Question: ", ""))
+		else:
+			sim_inputs.append(sim_input)
+
+	final_inputs = []
+	count = 0
+	for _ in range(len(orig_inputs)):
+		next_count = count+num_samples
+		final_inputs.append({'questions': sim_inputs[count : next_count]})
+		count = next_count
+		
 	# group the generated outputs by examples
 	# assert len(sim_inputs) == num_examples * num_samples
 	# example_siminputs = []
@@ -90,7 +82,7 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 	# 	ex_sim_inputs = [ex_sim_inputs[idx] for idx in unique_idxs]
 	# 	example_siminputs.append(ex_sim_inputs)
 	# assert len(example_siminputs) == num_examples
-	return final_sim_input
+	return final_inputs
 
 
 def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context):

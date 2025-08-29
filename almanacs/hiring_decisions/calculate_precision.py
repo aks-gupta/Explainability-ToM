@@ -12,7 +12,8 @@ print(os.getcwd())
 
 if __name__ == '__main__':
 	num_examples = GENERAL_CONFIGS['num_examples']
-	EX_IDXS = range(0, num_examples)
+	num_counterfactual_qs = GENERAL_CONFIGS['num_counterfactual_qs']
+	EX_IDXS = range(0, num_examples*num_counterfactual_qs)
 	simqg_model = 'gpt-4o'
 	top_p = 1.0
 	simqa_model = 'gpt-4o'
@@ -22,7 +23,7 @@ if __name__ == '__main__':
 
 	setting2exidx2precision = {}
 	for taskqa_model in ['gpt-4o']:
-		for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+		for taskqa_expl_type in ['cot']:
 			for explanation in ['withexpl']:
 				print("-------" + str(taskqa_expl_type) + "--------")
 				print(explanation)
@@ -30,36 +31,41 @@ if __name__ == '__main__':
 				setting2exidx2precision[setting] = {}
 
 				step_3_out = f'{full_path}/{GENERAL_CONFIGS['step_3_out']}_{taskqa_model}_simqg_{simqg_model}_simqa_{simqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
+				print(step_3_out)
 				exidx2qns_simans = pkl.load(
 					open(step_3_out, 'rb'))
 
-				# exidx2qns_simans = pkl.load(
-				# 	# open(f'../outputs/taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}.pkl', 'rb'))
-				# 	open(f'./outputs/final/simulation_model/taskqa_hiring_decisions_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}-simqa_{simqa_model}_{explanation}_fix_test_180_CHECK_CHECK.pkl', 'rb'))
-
+				count = 0
+				simans_count = {}
 				for exidx in exidx2qns_simans:
-					exidx2qns_simans[exidx] = [
-						str(exidx2qns_simans[exidx]['pred_ans']) 
-					]
+					for simans in exidx2qns_simans[exidx]:
+						pred_ans = simans['pred_ans']
+						simans_count[count] = [str(pred_ans)]
+						count+=1
+				print(simans_count)
 
 				step_4_out = f'{full_path}/{GENERAL_CONFIGS['step_4_out']}_{taskqa_model}_simqg_{simqg_model}_taskqa_{taskqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
+				print(step_4_out)
+
 				exidx2qns_taskans = pkl.load(
 					open(step_4_out, 'rb'))
 				
-				# exidx2qns_taskans = pkl.load(
-				# 	open(f'./outputs/final/task_model/taskqa_hiring_decisions_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}-taskqa_{taskqa_model}_{explanation}_180_CHECK_CHECK.pkl', 'rb'))
-				
+				count = 0
+				taskans_count = {}
 				for exidx in exidx2qns_taskans:
-					exidx2qns_taskans[exidx] =  [
-						str(exidx2qns_taskans[exidx]['pred_ans'])
-					]
+					for taskans in exidx2qns_taskans[exidx]:
+						pred_ans = taskans['pred_ans']
+						taskans_count[count] = [str(pred_ans)]
+						count+=1
+				print(taskans_count)
+
 				
 				ex_simulatable_count, ex_correct_simul_count = 0, 0
 				unknown_count = 0
 				unknown_set = set()
 				for exidx in EX_IDXS:
-					simqa_ann = exidx2qns_simans[exidx][0]
-					taskqa_pred = exidx2qns_taskans[exidx][0]
+					simqa_ann = simans_count[exidx][0]
+					taskqa_pred = taskans_count[exidx][0]
 					if simqa_ann in ['no', 'yes']:
 						ex_simulatable_count += 1
 						if simqa_ann == taskqa_pred:

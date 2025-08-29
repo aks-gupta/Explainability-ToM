@@ -150,14 +150,15 @@ def task_qa_sim_inputs_list(model, expl_type, sim_inputs_list):
 
 def task_qa_hiring_decisions_sim_inputs_list(model, expl_type, sim_inputs_list):
     print(">>Entered<<")
-    # all_sim_inputs = [input for sim_inputs in sim_inputs_list for input in sim_inputs]
-    preds = task_qa_hiring_decisions(model, expl_type, sim_inputs_list)
+    all_sim_inputs = [input for sim_inputs in sim_inputs_list for input in sim_inputs['questions']]
+    preds = task_qa_hiring_decisions(model, expl_type, all_sim_inputs)
     print(type(preds), len(preds))
     # regroup preds according to examples (multiple simulation inputs for each original input)
     example_preds = []
-    cur = 0
-    for ex_idx in range(len(sim_inputs_list)):
-        example_preds.append(preds[ex_idx])
-        cur += 1
-    assert cur == len(preds)
+    num_samples = len(sim_inputs_list)
+    toAdd = int(len(preds)/num_samples)
+    ex_idx=0
+    while ex_idx < len(preds):
+        example_preds.append(preds[ex_idx:ex_idx+toAdd])
+        ex_idx+=toAdd
     return example_preds

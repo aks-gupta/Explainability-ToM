@@ -26,6 +26,8 @@ def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
     print(len(preds))
     print(len(ex_idxs))
     for pos, ex_idx in enumerate(ex_idxs):
+        print(preds[pos])
+        print("\n\n")
         all_preds[ex_idx] = preds[pos]
     assert out_file.endswith('.pkl')
     pkl.dump(all_preds, open(out_file, 'wb'))
@@ -40,11 +42,13 @@ def main():
 
     #Get config values
     num_examples = GENERAL_CONFIGS['num_examples']
+    num_counterfactual_qs = GENERAL_CONFIGS['num_counterfactual_qs']
     EX_IDXS = range(0, num_examples)
 
     # TaskQA
     for taskqa_model in ['gpt-4o']:
-        for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+        # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+        for taskqa_expl_type in ['cot']:
             test_inputs = json.load(open('./data/data_hiring_decisions.json'))['test']
             step_1_out = f'{full_path}/{GENERAL_CONFIGS['step_1_out']}_{taskqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
             # out_file = f'./outputs/refined/taskqa_hiring_decisions_{taskqa_model}_{taskqa_expl_type}_test_180.pkl'
@@ -54,7 +58,8 @@ def main():
 
     # SimQG
     for taskqa_model in ['gpt-4o']:
-        for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+        # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+        for taskqa_expl_type in ['cot']:
             for simqg_model in ['gpt-4o']:
                 for explanation in ['withexpl']:
                     for top_p in [1.0]:
@@ -64,12 +69,13 @@ def main():
                         orig_tm_preds = pkl.load(open(step_1_out, 'rb'))
                         run_task_save_results(task_function=simulate_qg_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_2_out,
                                                 model=simqg_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
-                                                top_p=top_p, num_samples=6, with_context=explanation)
+                                                top_p=top_p, num_samples=num_counterfactual_qs, with_context=explanation)
                         print(step_2_out)
     
     # SimQA
     for taskqa_model in ['gpt-4o']:
-        for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+        # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+        for taskqa_expl_type in ['cot']:
             for simqg_model in ['gpt-4o']: # expl
                 for explanation in ['withexpl']:
                     for top_p in [1.0]:
@@ -86,7 +92,8 @@ def main():
 
     # TaskQA on SimInputs
     for taskqa_model in ['gpt-4o']:
-        for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+        # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+        for taskqa_expl_type in ['cot']:
             for simqg_model in ['gpt-4o']:
                 for explanation in ['withexpl']:
                     for top_p in [1.0]:
