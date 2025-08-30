@@ -65,23 +65,6 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 		next_count = count+num_samples
 		final_inputs.append({'questions': sim_inputs[count : next_count]})
 		count = next_count
-		
-	# group the generated outputs by examples
-	# assert len(sim_inputs) == num_examples * num_samples
-	# example_siminputs = []
-	# for ex_idx in range(num_examples):
-	# 	ex_sim_inputs = [sim_input for sim_input in sim_inputs[ex_idx * num_samples: (ex_idx + 1) * num_samples]
-	# 		 if sim_input is not None]
-	# 	seen_questions = set()
-	# 	unique_idxs = []
-	# 	for idx in range(len(ex_sim_inputs)):
-	# 		qn = ex_sim_inputs[idx]['question']
-	# 		if qn not in seen_questions:
-	# 			seen_questions.add(qn)
-	# 			unique_idxs.append(idx)
-	# 	ex_sim_inputs = [ex_sim_inputs[idx] for idx in unique_idxs]
-	# 	example_siminputs.append(ex_sim_inputs)
-	# assert len(example_siminputs) == num_examples
 	return final_inputs
 
 
@@ -115,16 +98,12 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
 		response0_start_idx = response.find("Candidate Response 1:")
 		response1_start_idx = response.find("Candidate Response 2:")
 		if not ((context_start_idx == 0) and (response0_start_idx > context_start_idx) and (response1_start_idx > response0_start_idx)):
-			# print(context_start_idx, response0_start_idx, response1_start_idx)
-			# print(response)
-			# print('\n\n\n\n\n\n\n')
 			sim_inputs.append(None)
 		else:
 			context = response[context_start_idx+len("Context:"): response0_start_idx].strip()
 			response0 = response[response0_start_idx+len("Candidate Response 1:"): response1_start_idx].strip()
 			response1 = response[response1_start_idx+len("Candidate Response 2:"):].strip()
 			if 'Human:' in response1: # the next example already started
-				# print('Warning')
 				response1 = response1[: response1.index('Human:')].strip()
 			sim_inputs.append({'context': context, 'options': [response0, response1]})
 	# group the generated outputs by examples

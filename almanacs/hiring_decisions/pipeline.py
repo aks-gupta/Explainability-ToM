@@ -47,8 +47,7 @@ def main():
 
     # TaskQA
     for taskqa_model in ['gpt-4o']:
-        # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
-        for taskqa_expl_type in ['cot']:
+        for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
             test_inputs = json.load(open('./data/data_hiring_decisions.json'))['test']
             step_1_out = f'{full_path}/{GENERAL_CONFIGS['step_1_out']}_{taskqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
             # out_file = f'./outputs/refined/taskqa_hiring_decisions_{taskqa_model}_{taskqa_expl_type}_test_180.pkl'
@@ -58,8 +57,7 @@ def main():
 
     # SimQG
     for taskqa_model in ['gpt-4o']:
-        # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
-        for taskqa_expl_type in ['cot']:
+        for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
             for simqg_model in ['gpt-4o']:
                 for explanation in ['withexpl']:
                     for top_p in [1.0]:
@@ -74,8 +72,7 @@ def main():
     
     # SimQA
     for taskqa_model in ['gpt-4o']:
-        # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
-        for taskqa_expl_type in ['cot']:
+        for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
             for simqg_model in ['gpt-4o']: # expl
                 for explanation in ['withexpl']:
                     for top_p in [1.0]:
@@ -92,8 +89,7 @@ def main():
 
     # TaskQA on SimInputs
     for taskqa_model in ['gpt-4o']:
-        # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
-        for taskqa_expl_type in ['cot']:
+        for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
             for simqg_model in ['gpt-4o']:
                 for explanation in ['withexpl']:
                     for top_p in [1.0]:

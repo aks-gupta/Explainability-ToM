@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
 	setting2exidx2precision = {}
 	for taskqa_model in ['gpt-4o']:
-		for taskqa_expl_type in ['cot']:
+		for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
 			for explanation in ['withexpl']:
 				print("-------" + str(taskqa_expl_type) + "--------")
 				print(explanation)

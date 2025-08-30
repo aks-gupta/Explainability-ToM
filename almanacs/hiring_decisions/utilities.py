@@ -39,5 +39,5 @@ def return_last_max_version():
     folder_path = "almanacs/versioned_output"  # Change this to your folder path
     last_version = list_files_in_folder(folder_path)
     print(f"Calculating precision for v{last_version}")
-    file_name = f'v{last_version}' #switch to a targeted version, else= "f'v4'"
+    file_name = f'v6' #switch to a targeted version, else= "f'v{last_version}'"
     return os.path.join(folder_path, file_name)
