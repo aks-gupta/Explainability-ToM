@@ -43,7 +43,7 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 	# orig_inputs = List[str]
 	assert len(orig_inputs) == len(orig_tm_preds)
 	num_examples = len(orig_inputs)
-	prompts = get_prompts_by_task(f'almanacs-hiring-decisions-simqg-{with_context}',
+	prompts = get_prompts_by_task(f'almanacs-hiring-decisions-simqg-{with_context}-label-balanced', #add -label-balanced for balanced labels
 								  [{'orig_qn': orig_input['question'], 'orig_qa_tm_expl': orig_tm_pred['pred_expl']}
 								   for orig_input, orig_tm_pred in zip(orig_inputs, orig_tm_preds)])
 	# repeat the prompts for self.num_samples times
