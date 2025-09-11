@@ -33,7 +33,7 @@ def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p
             time.sleep(1)
     return responses
 
-def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context):
+def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context, balance_labels=False):
     """
     Generate simulated follow-up questions (and predicted answer explanations)
     for each example using the 'almanacs-simqg' prompt template.
@@ -45,20 +45,48 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
     assert len(orig_inputs) == len(orig_tm_preds)
     num_examples = len(orig_inputs)
     # For simqg, we use the "almanacs-simqg" prompt template.
-    prompts = get_prompts_by_task(
-        'almanacs-simqg-new',
-        [{
-            'context': orig_input['context'],
-            'explanation': orig_tm_pred['pred_expl']
-        } for orig_input, orig_tm_pred in zip(orig_inputs, orig_tm_preds)]
-    )
-    # Repeat each prompt num_samples times.
-    prompts = [prompt for prompt in prompts for _ in range(num_samples)]
-    assert len(prompts) == num_examples * num_samples
+    # Build prompts based on balancing approach
+    if balance_labels:
+        print("Using explicit balanced generation approach")
+        # Split samples between yes and no targets
+        yes_samples = num_samples // 2
+        no_samples = num_samples - yes_samples
+        print(f"Generating {yes_samples} 'yes' + {no_samples} 'no' questions per example")
+        
+        all_prompts = []
+        for orig_input, orig_tm_pred in zip(orig_inputs, orig_tm_preds):
+            base_data = {
+                'context': orig_input['context'],
+                'explanation': orig_tm_pred['pred_expl']
+            }
+            base_prompt = get_prompts_by_task('almanacs-simqg-new', [base_data])[0]
+            
+            # Generate prompts targeting "yes" answers
+            for _ in range(yes_samples):
+                yes_instruction = "\n\nSPECIFIC INSTRUCTION: Create a follow-up question where you predict the robot will answer 'YES'."
+                all_prompts.append(base_prompt + yes_instruction)
+            
+            # Generate prompts targeting "no" answers  
+            for _ in range(no_samples):
+                no_instruction = "\n\nSPECIFIC INSTRUCTION: Create a follow-up question where you predict the robot will answer 'NO'."
+                all_prompts.append(base_prompt + no_instruction)
+        
+    else:
+        # Original approach - repeat each prompt num_samples times
+        base_prompts = get_prompts_by_task(
+            'almanacs-simqg-new',
+            [{
+                'context': orig_input['context'],
+                'explanation': orig_tm_pred['pred_expl']
+            } for orig_input, orig_tm_pred in zip(orig_inputs, orig_tm_preds)]
+        )
+        all_prompts = [prompt for prompt in base_prompts for _ in range(num_samples)]
+    
+    assert len(all_prompts) == num_examples * num_samples
 
     responses = call_openai_api(
         model=model,
-        prompts=prompts,
+        prompts=all_prompts,
         bsz=8,
         num_processes=12,
         temperature=1,
@@ -120,3 +148,49 @@ def mix_sim_inputs(model1_siminputs, model2_siminputs, sample_num):
         model1_siminputs = [ex for ex in model1_siminputs if not _check_two_dict_same(ex, add_sample)]
         model2_siminputs = [ex for ex in model2_siminputs if not _check_two_dict_same(ex, add_sample)]
     return mixed_samples
+
+def check_simqg_balance(simqg_file):
+    """Check balance of generated questions from SimQG output."""
+    import pickle as pkl
+    from collections import Counter
+    
+    try:
+        simqg_outputs = pkl.load(open(simqg_file, 'rb'))
+        all_predictions = []
+        
+        # Extract the robot's predicted answers from sim_qa_expl
+        for ex_idx, ex_outputs in simqg_outputs.items():
+            for output in ex_outputs:
+                sim_qa_expl = output.get('sim_qa_expl', '').lower()
+                
+                # Look for various patterns indicating yes/no predictions
+                if any(phrase in sim_qa_expl for phrase in ['answer yes', 'say yes', 'respond yes', 'likely yes']):
+                    all_predictions.append('yes')
+                elif any(phrase in sim_qa_expl for phrase in ['answer no', 'say no', 'respond no', 'likely no']):
+                    all_predictions.append('no')
+                elif 'so the robot will likely answer' in sim_qa_expl:
+                    # Extract the specific answer after this phrase
+                    after_phrase = sim_qa_expl.split('so the robot will likely answer')[1]
+                    if 'yes' in after_phrase[:10]:  # Look in first 10 chars after phrase
+                        all_predictions.append('yes')
+                    elif 'no' in after_phrase[:10]:
+                        all_predictions.append('no')
+        
+        counter = Counter(all_predictions)
+        total = len(all_predictions)
+        
+        if total > 0:
+            yes_count = counter.get('yes', 0)
+            no_count = counter.get('no', 0)
+            yes_pct = (yes_count / total) * 100
+            
+            print(f"Generated Question Balance:")
+            print(f"  Total predictions found: {total}")
+            print(f"  Predicted Yes: {yes_count} ({yes_pct:.1f}%)")
+            print(f"  Predicted No:  {no_count} ({100-yes_pct:.1f}%)")
+            print(f"  Balance: {'GOOD' if abs(yes_pct - 50) < 10 else 'NEEDS IMPROVEMENT'}")
+        else:
+            print("No valid predictions found in generated questions!")
+        
+    except FileNotFoundError:
+        print(f"Balance check: File {simqg_file} not found yet")

@@ -12,7 +12,7 @@ client = openai.OpenAI(
     base_url="https://cmu.litellm.ai",
 )
 
-cue = 'nontoxic'
+cue = 'none'
 
 def call_openai_api(model, prompts, temperature=0, max_tokens=200, stop=None):
     responses = []

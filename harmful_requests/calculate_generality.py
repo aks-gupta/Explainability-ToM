@@ -1,3 +1,98 @@
+# import sys
+# from collections import Counter
+# from copy import deepcopy
+# import numpy as np
+# import pickle as pkl
+# from scipy.stats import ttest_rel
+# sys.path.append('../utils')
+# from diversity_util import calculate_diversity
+
+# # Settings for diversity metrics.
+# metrics = ['bleu', 'cosine', 'jaccard']
+# ex_idxs = range(30)
+# simqg_model = 'mix'
+# with_context = True
+# top_p = 1.0
+# simqa_model = 'gpt-4o'
+# cue = 'nontoxic'
+
+# # Build a dictionary to store simulatable inputs per example for each setting.
+# setting2exidx2simulatableinputs = {}
+
+# # Use only "gpt-4o-mini" for taskqa_model and iterate over two explanation types.
+# for taskqa_expl_type in ['cot']:
+#     setting = ('gpt-4o-mini', taskqa_expl_type)
+#     setting2exidx2simulatableinputs[setting] = {}
+    
+#     # Load the simQA fix predictions. (This file should contain predicted answers.)
+#     exidx2qns_simans = pkl.load(open(f'./outputs/taskqa_gpt-4o_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}_fix_{cue}_test_50.pkl', 'rb')) #noexpl
+#     # Convert each predicted answer into a string.
+#     exidx2qns_simans = {ex_idx: [str(qn_ann['pred_ans']) for qn_ann in exidx2qns_simans[ex_idx]]
+#                           for ex_idx in exidx2qns_simans}
+    
+#     # Load the simqg inputs (generated follow-up outputs) for this setting.
+#     sim_inputs = pkl.load(open(f'./outputs/taskqa_gpt-4o_{taskqa_expl_type}-simqg_{simqg_model}_1.0_{with_context}_{cue}_test_50.pkl', 'rb'))
+    
+#     for ex_idx in ex_idxs:
+#         # Use only the first 6 simulated outputs for each example.
+#         ex_sim_inputs = sim_inputs[ex_idx][:6]
+#         ex_sim_ans = exidx2qns_simans[ex_idx]
+#         # Ensure that each simulated output has a corresponding predicted answer.
+#         assert len(ex_sim_inputs) == len(ex_sim_ans)
+        
+#         # Build simulatable input strings.
+#         # Since your harmful requests have a 'context' field (the original request) and your simqg outputs
+#         # are now generated follow-up outputs (each with a 'sim_qn' field), we construct a string combining these.
+#         simulatable_inputs = [
+#             f"Follow-up Question: {ex_sim_inputs[idx]['sim_qn']}"
+#             for idx in range(len(ex_sim_inputs))
+#             if ex_sim_ans[idx] != 'unknown'
+#         ]
+#         setting2exidx2simulatableinputs[setting][ex_idx] = simulatable_inputs
+
+# # Calculate diversity metrics for each setting.
+# setting2divs = {}
+# for taskqa_expl_type in ['cot']:
+#     setting = ('gpt-4o-mini', taskqa_expl_type)
+#     divs = []
+#     for ex_idx in ex_idxs:
+#         # calculate_diversity is expected to accept a list of strings (the simulatable inputs)
+#         divs.append(calculate_diversity(setting2exidx2simulatableinputs[setting][ex_idx]))
+#     setting2divs[setting] = np.array(divs)
+
+# # Now, we have two settings: ('gpt-4o-mini', 'cot') and ('gpt-4o-mini', 'posthoc').
+# settings = list(setting2divs.keys())
+# print("Settings:", settings)
+
+# # For each diversity metric, get the scores per example, compute common indices, the mean, and run paired t-tests.
+# for div_metric in range(3):
+#     print("\nMetric:", metrics[div_metric])
+#     setting2scores = {setting: setting2divs[setting][:, div_metric].tolist() for setting in setting2divs}
+    
+#     # Identify indices for which all settings have a non-NaN score.
+#     setting2exidxs_nonempty = {
+#         setting: [ex_idx for ex_idx in range(len(setting2scores[setting]))
+#                   if not np.isnan(setting2scores[setting][ex_idx])]
+#         for setting in setting2scores
+#     }
+#     # Get the common indices across both settings.
+#     nonempty_exidxs_for_all = [ex_idx for ex_idx in setting2exidxs_nonempty[settings[0]]
+#                                if all(ex_idx in setting2exidxs_nonempty[other_setting] for other_setting in settings[1:])]
+#     print("Number of common examples:", len(nonempty_exidxs_for_all))
+    
+#     # Restrict scores to these common indices.
+#     setting2scores = {setting: [setting2scores[setting][ex_idx] for ex_idx in nonempty_exidxs_for_all]
+#                       for setting in setting2scores}
+#     setting2mean = {setting: np.mean(setting2scores[setting]) for setting in setting2scores}
+#     print("Mean diversity scores:")
+#     for setting in settings:
+#         print(f"{' '.join(setting)}: {round(setting2mean[setting], 3)}")
+    
+#     # Run paired t-tests between the two settings.
+#     for setting1 in settings:
+#         for setting2 in settings:
+#             p_val = ttest_rel(setting2scores[setting1], setting2scores[setting2])[1]
+#             print(f"P-value for {setting1} vs {setting2}: {p_val}")
 import sys
 from collections import Counter
 from copy import deepcopy
@@ -7,90 +102,105 @@ from scipy.stats import ttest_rel
 sys.path.append('../utils')
 from diversity_util import calculate_diversity
 
-# Settings for diversity metrics.
-metrics = ['bleu', 'cosine', 'jaccard']
-ex_idxs = range(30)
-simqg_model = 'mix'
-with_context = True
-top_p = 1.0
-simqa_model = 'gpt-4o'
-cue = 'nontoxic'
+# =============================================================================
+# CONFIGURATION CONSTANTS (should match pipeline.py)
+# =============================================================================
 
-# Build a dictionary to store simulatable inputs per example for each setting.
-setting2exidx2simulatableinputs = {}
+MODELS = {
+    'TASKQA': 'gpt-4o-mini',
+    'SIMQG': 'gpt-4o-mini',
+    'SIMQA': 'gpt-4o-mini'
+}
 
-# Use only "gpt-4o-mini" for taskqa_model and iterate over two explanation types.
-for taskqa_expl_type in ['cot']:
-    setting = ('gpt-4o-mini', taskqa_expl_type)
-    setting2exidx2simulatableinputs[setting] = {}
+EXPLANATION_TYPES = ['cot']
+CUE_TYPE = 'nontoxic'
+EXAMPLE_RANGE = range(30)
+NUM_EXAMPLES = len(EXAMPLE_RANGE)
+SIMQG_PARAMS = {
+    'top_p': 1.0,
+    'with_context': True,
+    'balance_labels': True
+}
+SIMQA_PARAMS = {
+    'k_shot': 3,  # Number of few-shot examples (0 for zero-shot)
+    'include_expl': True  # Whether to include explanations
+}
+
+DIVERSITY_METRICS = ['bleu', 'cosine', 'jaccard']
+OUTPUTS_DIR = './outputs/new'
+
+if __name__ == '__main__':
+    taskqa_model = MODELS['TASKQA']
+    simqa_model = MODELS['SIMQA']
     
-    # Load the simQA fix predictions. (This file should contain predicted answers.)
-    exidx2qns_simans = pkl.load(open(f'./outputs/taskqa_gpt-4o_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}-simqa_{simqa_model}_fix_{cue}_test_50.pkl', 'rb')) #noexpl
-    # Convert each predicted answer into a string.
-    exidx2qns_simans = {ex_idx: [str(qn_ann['pred_ans']) for qn_ann in exidx2qns_simans[ex_idx]]
-                          for ex_idx in exidx2qns_simans}
-    
-    # Load the simqg inputs (generated follow-up outputs) for this setting.
-    sim_inputs = pkl.load(open(f'./outputs/taskqa_gpt-4o_{taskqa_expl_type}-simqg_{simqg_model}_1.0_{with_context}_{cue}_test_50.pkl', 'rb'))
-    
-    for ex_idx in ex_idxs:
-        # Use only the first 6 simulated outputs for each example.
-        ex_sim_inputs = sim_inputs[ex_idx][:6]
-        ex_sim_ans = exidx2qns_simans[ex_idx]
-        # Ensure that each simulated output has a corresponding predicted answer.
-        assert len(ex_sim_inputs) == len(ex_sim_ans)
+    setting2exidx2simulatableinputs = {}
+
+    for expl_type in EXPLANATION_TYPES:
+        setting = (taskqa_model, expl_type)
+        setting2exidx2simulatableinputs[setting] = {}
         
-        # Build simulatable input strings.
-        # Since your harmful requests have a 'context' field (the original request) and your simqg outputs
-        # are now generated follow-up outputs (each with a 'sim_qn' field), we construct a string combining these.
-        simulatable_inputs = [
-            f"Follow-up Question: {ex_sim_inputs[idx]['sim_qn']}"
-            for idx in range(len(ex_sim_inputs))
-            if ex_sim_ans[idx] != 'unknown'
-        ]
-        setting2exidx2simulatableinputs[setting][ex_idx] = simulatable_inputs
+        # Load SimQA predictions to filter valid answers
+        balance_str = 'balanced' if SIMQG_PARAMS['balance_labels'] else 'unbalanced'
+        simqa_file = f'{OUTPUTS_DIR}/taskqa_{taskqa_model}_{expl_type}-simqg_mix_{SIMQG_PARAMS["top_p"]}_{SIMQG_PARAMS["with_context"]}_{balance_str}-simqa_{simqa_model}_{SIMQA_PARAMS["k_shot"]}shot_fix_{CUE_TYPE}_test_{NUM_EXAMPLES}.pkl'
+        exidx2qns_simans = pkl.load(open(simqa_file, 'rb'))
+        exidx2qns_simans = {ex_idx: [str(qn_ann['pred_ans']) for qn_ann in exidx2qns_simans[ex_idx]]
+                              for ex_idx in exidx2qns_simans}
+        
+        # Load simqg inputs (generated follow-up outputs)
+        simqg_file = f'{OUTPUTS_DIR}/taskqa_{taskqa_model}_{expl_type}-simqg_mix_{SIMQG_PARAMS["top_p"]}_{SIMQG_PARAMS["with_context"]}_{balance_str}_{CUE_TYPE}_test_{NUM_EXAMPLES}.pkl'
+        sim_inputs = pkl.load(open(simqg_file, 'rb'))
+        
+        for ex_idx in EXAMPLE_RANGE:
+            ex_sim_inputs = sim_inputs[ex_idx][:6]  # Use first 6
+            ex_sim_ans = exidx2qns_simans[ex_idx]
+            assert len(ex_sim_inputs) == len(ex_sim_ans)
+            
+            # Build simulatable input strings
+            simulatable_inputs = [
+                f"Follow-up Question: {ex_sim_inputs[idx]['sim_qn']}"
+                for idx in range(len(ex_sim_inputs))
+                if ex_sim_ans[idx] != 'unknown'
+            ]
+            setting2exidx2simulatableinputs[setting][ex_idx] = simulatable_inputs
 
-# Calculate diversity metrics for each setting.
-setting2divs = {}
-for taskqa_expl_type in ['cot']:
-    setting = ('gpt-4o-mini', taskqa_expl_type)
-    divs = []
-    for ex_idx in ex_idxs:
-        # calculate_diversity is expected to accept a list of strings (the simulatable inputs)
-        divs.append(calculate_diversity(setting2exidx2simulatableinputs[setting][ex_idx]))
-    setting2divs[setting] = np.array(divs)
+    # Calculate diversity metrics
+    setting2divs = {}
+    for expl_type in EXPLANATION_TYPES:
+        setting = (taskqa_model, expl_type)
+        divs = []
+        for ex_idx in EXAMPLE_RANGE:
+            divs.append(calculate_diversity(setting2exidx2simulatableinputs[setting][ex_idx]))
+        setting2divs[setting] = np.array(divs)
 
-# Now, we have two settings: ('gpt-4o-mini', 'cot') and ('gpt-4o-mini', 'posthoc').
-settings = list(setting2divs.keys())
-print("Settings:", settings)
+    settings = list(setting2divs.keys())
+    print("Settings:", settings)
 
-# For each diversity metric, get the scores per example, compute common indices, the mean, and run paired t-tests.
-for div_metric in range(3):
-    print("\nMetric:", metrics[div_metric])
-    setting2scores = {setting: setting2divs[setting][:, div_metric].tolist() for setting in setting2divs}
-    
-    # Identify indices for which all settings have a non-NaN score.
-    setting2exidxs_nonempty = {
-        setting: [ex_idx for ex_idx in range(len(setting2scores[setting]))
-                  if not np.isnan(setting2scores[setting][ex_idx])]
-        for setting in setting2scores
-    }
-    # Get the common indices across both settings.
-    nonempty_exidxs_for_all = [ex_idx for ex_idx in setting2exidxs_nonempty[settings[0]]
-                               if all(ex_idx in setting2exidxs_nonempty[other_setting] for other_setting in settings[1:])]
-    print("Number of common examples:", len(nonempty_exidxs_for_all))
-    
-    # Restrict scores to these common indices.
-    setting2scores = {setting: [setting2scores[setting][ex_idx] for ex_idx in nonempty_exidxs_for_all]
-                      for setting in setting2scores}
-    setting2mean = {setting: np.mean(setting2scores[setting]) for setting in setting2scores}
-    print("Mean diversity scores:")
-    for setting in settings:
-        print(f"{' '.join(setting)}: {round(setting2mean[setting], 3)}")
-    
-    # Run paired t-tests between the two settings.
-    for setting1 in settings:
-        for setting2 in settings:
-            p_val = ttest_rel(setting2scores[setting1], setting2scores[setting2])[1]
-            print(f"P-value for {setting1} vs {setting2}: {p_val}")
-
+    # For each diversity metric, display results
+    for div_metric in range(3):
+        print(f"\nMetric: {DIVERSITY_METRICS[div_metric]}")
+        setting2scores = {setting: setting2divs[setting][:, div_metric].tolist() for setting in setting2divs}
+        
+        # Get common non-NaN indices
+        setting2exidxs_nonempty = {
+            setting: [ex_idx for ex_idx in range(len(setting2scores[setting]))
+                      if not np.isnan(setting2scores[setting][ex_idx])]
+            for setting in setting2scores
+        }
+        nonempty_exidxs_for_all = [ex_idx for ex_idx in setting2exidxs_nonempty[settings[0]]
+                                   if all(ex_idx in setting2exidxs_nonempty[other_setting] for other_setting in settings[1:])]
+        print("Number of common examples:", len(nonempty_exidxs_for_all))
+        
+        # Restrict to common indices
+        setting2scores = {setting: [setting2scores[setting][ex_idx] for ex_idx in nonempty_exidxs_for_all]
+                          for setting in setting2scores}
+        setting2mean = {setting: np.mean(setting2scores[setting]) for setting in setting2scores}
+        
+        print("Mean diversity scores:")
+        for setting in settings:
+            print(f"{' '.join(setting)}: {round(setting2mean[setting], 3)}")
+        
+        # Statistical comparisons
+        for setting1 in settings:
+            for setting2 in settings:
+                p_val = ttest_rel(setting2scores[setting1], setting2scores[setting2])[1]
+                print(f"P-value for {setting1} vs {setting2}: {p_val}") 

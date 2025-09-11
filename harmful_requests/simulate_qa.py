@@ -157,85 +157,50 @@ def extract_sim_qa_ans(sim_qa_expl, include_expl):
                     
     return "neither"
         
-def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, include_expl=False, majority_vote=None):
+def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, k_shot=3, include_expl=True, majority_vote=None):
     """
-    Build prompts using only the original (starter) context and explanation from the TaskQA output,
-    matching your few-shot prompt definition for "almanacs-simqa-withexpl".
-
-    Expected fields:
-      - {context}      → harmful request (orig_inputs["context"])
-      - {explanation}  → TaskQA explanation (orig_tm_preds["pred_expl"])
-      - {sim_qn}       → simulated follow-up question (sim_inputs_list elements, key "sim_qn")
-
-    The template (template_with_label) is assumed to be:
-
-      Human: Starter Question: {context}
-      Robot's Answer with Explanation: {explanation}
-      Follow-up Question:
-      
-      Assistant: here is my response. {sim_qn}
-      My Answer with Explanation: {sim_qa_expl}
-
-    The function then parses the API output to extract:
-      - sim_qn (the generated follow-up question)
-      - sim_qa_expl (the generated answer explanation, expected to include a final sentence such as "So the answer is yes." or "So the answer is no.")
-      - pred_ans (extracted via extract_sim_qa_ans from sim_qa_expl)
-
-    The number of outputs per original example is determined by sim_inputs_list (its content is ignored aside from count).
-
-    Since "almanacs-simqa-withexpl" is the only prompt available, we always use that.
+    Build prompts with k-shot examples for SimQA.
     """
     assert len(orig_inputs) == len(orig_tm_preds) == len(sim_inputs_list)
-    num_examples = len(orig_inputs)
     
-    # Build one prompt per simulated output.
+    print(f"Using {k_shot}-shot prompting for SimQA")
+    
+    # Import the k-shot function
+    from prompts.load_prompt import get_k_shot_prompts_by_task
+    
+    # Build prompts
     prompts = []
     for orig_input, orig_tm_pred, sim_group in zip(orig_inputs, orig_tm_preds, sim_inputs_list):
-        # For each simulated output we require one prompt.
-        # We use the "sim_qn" from each sim_group element.
         for sim_input in sim_group:
             prompt_data = {
                 'context': orig_input['context'],
                 'explanation': orig_tm_pred['pred_expl'],
                 'sim_qn': sim_input.get('sim_qn', sim_input.get('question', ''))
             }
-            # Always use the almanacs-simqa-withexpl prompt.
+            
+            # Choose prompt template
             prompt_task = 'almanacs-simqa-withexpl-new' if include_expl else 'almanacs-simqa-noexpl'
-            prompt = get_prompts_by_task(prompt_task, [prompt_data])[0]
+            
+            # Get k-shot prompt
+            prompt = get_k_shot_prompts_by_task(prompt_task, [prompt_data], k_shot=k_shot)[0]
             prompts.append(prompt)
     
-    # Deduplicate prompts to save API calls.
+    # Rest of your existing code stays exactly the same...
     deduplicated_prompts = list(set(prompts))
     
-    # --- DEBUG: Print deduplicated prompts ---
-    # print("DEBUG: Deduplicated Prompts:")
-    # for idx, dp in enumerate(deduplicated_prompts):
-    #     print(f"Prompt {idx}:")
-    #     print(dp)
-    #     print("="*80)
-    
-    # Call API without stop token and with a moderate temperature to encourage generation.
     if majority_vote is None or majority_vote == 1:
         pred_expls = call_openai_api(model=model, prompts=deduplicated_prompts,
                                      temperature=0.7, max_tokens=200, stop=None)
     else:
         pred_expls = call_openai_api(model=model, prompts=deduplicated_prompts,
                                      temperature=1, max_tokens=200, stop=None)
+    
     assert len(pred_expls) == len(deduplicated_prompts)
     
-    # --- DEBUG: Print raw API responses for each deduplicated prompt ---
-    # print("\nDEBUG: Raw API Responses (for deduplicated prompts):")
-    # for idx, resp in enumerate(pred_expls):
-    #     print(f"Response {idx}:")
-    #     print(resp)
-    #     print("-"*80)
-    
-    # Reinsert duplicate predictions based on the original prompt order.
     prompt2pred_expl = {prompt: pred_expl for prompt, pred_expl in zip(deduplicated_prompts, pred_expls)}
     pred_expls = [prompt2pred_expl[prompt] for prompt in prompts]
     assert len(pred_expls) == len(prompts)
     
-    # Extract answers from API responses.
     if majority_vote is None or majority_vote == 1:
         preds = []
         for pred_expl in pred_expls:
@@ -252,9 +217,6 @@ def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, include_expl
             majority_ans = random.sample(most_frequent_answers, 1)[0]
             preds.append({'pred_ans': majority_ans, 'majority_vote_details': ex_preds})
     
-    # Regroup predictions according to examples.
-    # The order is determined by sim_inputs_list (each element's length is the number of outputs for that example).
-    assert len(preds) == len(prompts)
     example_preds = []
     cur = 0
     for sim_group in sim_inputs_list:
