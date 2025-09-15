@@ -1,39 +1,13 @@
 import json
 import sys
-sys.path.append('..')
-# from api_wrapper.api_wrapper import multiprocess_api
-from prompts.load_prompt import get_prompts_by_task
-from copy import deepcopy
 import random
-import openai
-import time
 import os
+from copy import deepcopy
 
-client = openai.OpenAI(
-    api_key=os.environ.get("LITELLM_API_KEY"),
-    base_url="https://cmu.litellm.ai",
-)
+sys.path.append('..')
+from prompts.load_prompt import get_prompts_by_task
 
-def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p=1.0, max_tokens=200, stop=None):
-    responses = []
-    for i, prompt in enumerate(prompts):
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                top_p=top_p,
-                max_tokens=max_tokens,
-                stop=stop
-            )
-            responses.append(response.choices[0].message.content)
-        except Exception as e:
-            print(f"[{i}] Error during call:\nPrompt: {prompt[:100]}...\nError: {e}")
-            responses.append("")
-            time.sleep(1)
-    return responses
-
-def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context, balance_labels=False):
+def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context, balance_labels=False, call_api=None):
     """
     Generate simulated follow-up questions (and predicted answer explanations)
     for each example using the 'almanacs-simqg' prompt template.
@@ -84,11 +58,9 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
     
     assert len(all_prompts) == num_examples * num_samples
 
-    responses = call_openai_api(
+    responses = call_api(
         model=model,
         prompts=all_prompts,
-        bsz=8,
-        num_processes=12,
         temperature=1,
         top_p=top_p,
         max_tokens=512
