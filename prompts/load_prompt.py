@@ -9,6 +9,8 @@ def _embed_prompt(
         prompt += template_with_label.format(**dem) #Question for few shot prompting
     # prompt += template_no_label.format(**test_example).strip()
     prompt += template_no_label.format(**test_example) #Question to ask
+    print("##..TESTING..##")
+    print(prompt)
     return prompt
 
 
