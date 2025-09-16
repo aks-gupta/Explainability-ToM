@@ -14,15 +14,15 @@ if __name__ == '__main__':
 	num_examples = GENERAL_CONFIGS['num_examples']
 	num_counterfactual_qs = GENERAL_CONFIGS['num_counterfactual_qs']
 	EX_IDXS = range(0, num_examples*num_counterfactual_qs)
-	simqg_model = 'gpt-4o'
+	simqg_model = 'gpt-4o-mini'
 	top_p = 1.0
-	simqa_model = 'gpt-4o'
+	simqa_model = 'gpt-4o-mini'
 	with_context = True
 	full_path = return_last_max_version()
 	print(full_path)
 
 	setting2exidx2precision = {}
-	for taskqa_model in ['gpt-4o']:
+	for taskqa_model in ['gpt-4o-mini']:
 		for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
 			for explanation in ['withexpl']:
 				print("-------" + str(taskqa_expl_type) + "--------")

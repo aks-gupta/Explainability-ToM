@@ -9,15 +9,18 @@ def _embed_prompt(
         prompt += template_with_label.format(**dem) #Question for few shot prompting
     # prompt += template_no_label.format(**test_example).strip()
     prompt += template_no_label.format(**test_example) #Question to ask
-    print("##..TESTING..##")
-    print(prompt)
     return prompt
 
 
 def get_prompts_by_task(task, test_examples, k_shot=3):
     prompt = json.load(open(os.path.join(os.path.dirname(__file__), 'prompts.json')))[task]
-    final_prompt = [_embed_prompt(prompt['instruction'], prompt['template_with_label'],
-                          prompt['template_no_label'], prompt['dem_examples'][:k_shot], test_example)
-            for test_example in test_examples]
+    if 'yes_no_label' in test_examples[0]:
+        final_prompt = [_embed_prompt(prompt['instruction'].format(test_example['yes_no_label']), prompt['template_with_label'],
+                            prompt['template_no_label'], prompt['dem_examples'][:k_shot], test_example)
+                for test_example in test_examples]
+    else:
+        final_prompt = [_embed_prompt(prompt['instruction'], prompt['template_with_label'],
+                            prompt['template_no_label'], prompt['dem_examples'][:k_shot], test_example)
+                for test_example in test_examples]
     return final_prompt
 

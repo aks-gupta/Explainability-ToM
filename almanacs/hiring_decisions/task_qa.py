@@ -69,7 +69,6 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
     return preds
 
 def task_qa_hiring_decisions_sim_inputs_list(model, expl_type, sim_inputs_list):
-    print(">>Entered<<")
     all_sim_inputs = [input for sim_inputs in sim_inputs_list for input in sim_inputs['questions']]
     preds = task_qa_hiring_decisions(model, expl_type, all_sim_inputs)
     print(type(preds), len(preds))
