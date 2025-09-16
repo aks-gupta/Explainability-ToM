@@ -42,11 +42,14 @@ def main():
 
     #Get config values
     num_examples = GENERAL_CONFIGS['num_examples']
+    counterfactual_code_generation = GENERAL_CONFIGS['counterfactuals']
     num_counterfactual_qs = GENERAL_CONFIGS['num_counterfactual_qs']
+
     EX_IDXS = range(0, num_examples)
 
     # TaskQA
     for taskqa_model in ['gpt-4o-mini']:
+        # for taskqa_expl_type in ['cot']:
         for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:     
             test_inputs = json.load(open('./data/data_hiring_decisions.json'))['test']
             step_1_out = f'{full_path}/{GENERAL_CONFIGS['step_1_out']}_{taskqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
@@ -55,21 +58,26 @@ def main():
             print(step_1_out)
 
     # SimQG
-    for taskqa_model in ['gpt-4o-mini']:
-        for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
-            for simqg_model in ['gpt-4o-mini']:
-                for explanation in ['withexpl']:
-                    for top_p in [1.0]:
-                        step_2_out = f'{full_path}/{GENERAL_CONFIGS['step_2_out']}_{taskqa_model}_simqg_{simqg_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
-                        orig_inputs = json.load(open('./data/data_hiring_decisions.json'))['test']
-                        orig_tm_preds = pkl.load(open(step_1_out, 'rb'))
-                        run_task_save_results(task_function=simulate_qg_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_2_out,
-                                                model=simqg_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
-                                                top_p=top_p, num_samples=num_counterfactual_qs, with_context=explanation)
-                        print(step_2_out)
+    if counterfactual_code_generation=='HARDCODED':
+        step_2_out = f'data/fixed_counterfactuals.pkl'
+    else:
+        for taskqa_model in ['gpt-4o-mini']:
+            # for taskqa_expl_type in ['cot']:
+            for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+                for simqg_model in ['gpt-4o-mini']:
+                    for explanation in ['withexpl']:
+                        for top_p in [1.0]:
+                            step_2_out = f'{full_path}/{GENERAL_CONFIGS['step_2_out']}_{taskqa_model}_simqg_{simqg_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
+                            orig_inputs = json.load(open('./data/data_hiring_decisions.json'))['test']
+                            orig_tm_preds = pkl.load(open(step_1_out, 'rb'))
+                            run_task_save_results(task_function=simulate_qg_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_2_out,
+                                                    model=simqg_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
+                                                    top_p=top_p, num_samples=num_counterfactual_qs, with_context=explanation)
+    print(step_2_out)
     
     # SimQA
     for taskqa_model in ['gpt-4o-mini']:
+        # for taskqa_expl_type in ['cot']:
         for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
             for simqg_model in ['gpt-4o-mini']: # expl
                 for explanation in ['withexpl']:
@@ -86,6 +94,7 @@ def main():
 
     # TaskQA on SimInputs
     for taskqa_model in ['gpt-4o-mini']:
+        # for taskqa_expl_type in ['cot']:
         for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
             for simqg_model in ['gpt-4o-mini']:
                 for explanation in ['withexpl']:

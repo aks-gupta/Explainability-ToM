@@ -13,6 +13,8 @@ print(os.getcwd())
 if __name__ == '__main__':
 	num_examples = GENERAL_CONFIGS['num_examples']
 	num_counterfactual_qs = GENERAL_CONFIGS['num_counterfactual_qs']
+	if GENERAL_CONFIGS['counterfactuals']=='HARDCODED':
+		num_counterfactual_qs = 1
 	EX_IDXS = range(0, num_examples*num_counterfactual_qs)
 	simqg_model = 'gpt-4o-mini'
 	top_p = 1.0
@@ -23,6 +25,7 @@ if __name__ == '__main__':
 
 	setting2exidx2precision = {}
 	for taskqa_model in ['gpt-4o-mini']:
+		# for taskqa_expl_type in ['cot']:
 		for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
 			for explanation in ['withexpl']:
 				print("-------" + str(taskqa_expl_type) + "--------")
