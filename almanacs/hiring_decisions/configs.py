@@ -1,8 +1,8 @@
 GENERAL_CONFIGS = {
-    'num_examples': 3,
+    'num_examples': 10,
     'k_shot': 3, #0->1, 1->2, 3->3, 5->4
     'counterfactuals': 'HARDCODED', #HARDCODED/GENERATED
-    'num_counterfactual_qs': 2, #set to 1 if HARDCODED
+    'num_counterfactual_qs': 1, #set to 1 if HARDCODED
     'step_1_out': 'hiring_decisions_task_qa_out', 
     'step_2_out': 'hiring_decisions_simulation_question_gen_out', 
     'step_3_out': 'hiring_decisions_simulation_question_answers_out',

@@ -2,6 +2,7 @@ import json
 from configs import GENERAL_CONFIGS
 import pickle as pkl
 import os
+import random
 
 counterfactual_code_generation = GENERAL_CONFIGS['counterfactuals']
 num_counterfactual_qs = GENERAL_CONFIGS['num_examples']
@@ -13,11 +14,12 @@ test_inputs = json.load(open('./data/data_hiring_decisions.json'))['test']
 print(type(test_inputs))
 
 # Extract questions into a list
-questions = [item["question"] for item in test_inputs][:int(num_counterfactual_qs)]
+questions = [item["question"] for item in test_inputs]
+top_k_questions = random.sample(questions, int(num_counterfactual_qs))
 
 # Print result
 all_qs = {}
-for idx, q in enumerate(questions, 0):
+for idx, q in enumerate(top_k_questions, 0):
     all_qs[idx]={}
     all_qs[idx]['questions']=[q]
 
