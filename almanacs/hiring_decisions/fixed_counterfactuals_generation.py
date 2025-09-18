@@ -10,8 +10,8 @@ num_counterfactual_qs = GENERAL_CONFIGS['num_examples']
 assert counterfactual_code_generation=='HARDCODED'
 
 # Parse the JSON
-test_inputs = json.load(open('./data/data_hiring_decisions.json'))['test']
-print(type(test_inputs))
+test_inputs = json.load(open('./data/data_hiring_decisions.json'))['fixed']
+print(type(test_inputs), len(test_inputs))
 
 # Extract questions into a list
 questions = [item["question"] for item in test_inputs]
