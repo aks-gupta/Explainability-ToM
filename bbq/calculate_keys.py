@@ -8,6 +8,6 @@ with open('data_bbq.json') as f:
 for key, value in data.items():
     print(key)
 
-num_items = len(data['genderIdentity'])
+num_items = len(data['raceXGender'])
 
 print(f"Number of items under 'genderIdentity': {num_items}")

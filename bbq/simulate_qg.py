@@ -1,6 +1,6 @@
 import json
 import sys
-sys.path.append('..')
+sys.path.append('.')
 # from api_wrapper.api_wrapper import multiprocess_api
 from prompts.load_prompt import get_prompts_by_task
 from copy import deepcopy
@@ -8,6 +8,7 @@ import random
 import openai
 import time
 import os
+import config
 
 client = openai.OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
@@ -49,13 +50,17 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
     Returns:
         List of lists of simulated examples grouped by original examples
     """
+    print(f"\n\033[1mRunning SimQG\033[0m with model={model}, top_p={top_p}, num_samples={num_samples}, with_context={with_context}, domain={domain} on {len(orig_inputs)} inputs.")
     # Verify inputs
     assert len(orig_inputs) == len(orig_tm_preds)
     num_examples = len(orig_inputs)
     
     # Prepare prompt inputs
-    prompt_task = f'bbq-simqg-withcontext_{domain}' if with_context else f'bbq-simqg-nocontext_{domain}'
+    balanced = config.BALANCED
+    prompt_task = f'bbq-simqg-withcontext-balanced_{domain}' if with_context and balanced else (f'bbq-simqg-withcontext_{domain}' if with_context else f'bbq-simqg-nocontext_{domain}')
+    # prompt_task = f'bbq-simqg-withcontext-balanced_{domain}' if with_context else f'bbq-simqg-nocontext_{domain}'
     prompt_inputs = []
+    per_example_count = []
     
     for orig_input, orig_tm_pred in zip(orig_inputs, orig_tm_preds):
         # Format the preferred index for the prompt
@@ -63,23 +68,41 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
             preferred_idx_plus_1 = str(orig_tm_pred['pred_ans'] + 1)
         else:
             preferred_idx_plus_1 = 'None'
-        
+
+        options = orig_input['options']
+        k = len(options)
+        per_example_count.append(k)
+
+        # for _ in range(k):
+        print("Options:", options)
+        for option in options:
+            prompt_inputs.append({
+                'starter_context': orig_input['context'],
+                'starter_question': orig_input['question'],
+                'starter_options': options,
+                'target_option': option,
+                'starter_preferred_idx_plus_1': preferred_idx_plus_1,
+                'starter_reason': orig_tm_pred.get('pred_expl', '')
+            })
+            
         # Create prompt input dict
-        prompt_input = {
-            'starter_context': orig_input['context'],
-            'starter_question': orig_input['question'],
-            'starter_options': orig_input['options'],
-            'starter_preferred_idx_plus_1': preferred_idx_plus_1,
-            'starter_reason': orig_tm_pred['pred_expl'] if 'pred_expl' in orig_tm_pred else ''
-        }
-        prompt_inputs.append(prompt_input)
-    
+        # prompt_input = {
+        #     'starter_context': orig_input['context'],
+        #     'starter_question': orig_input['question'],
+        #     'starter_options': orig_input['options'],
+        #     'starter_preferred_idx_plus_1': preferred_idx_plus_1,
+        #     'starter_reason': orig_tm_pred['pred_expl'] if 'pred_expl' in orig_tm_pred else ''
+        # }
+        # prompt_inputs.append(prompt_input)
+
     # Get prompts
     prompts = get_prompts_by_task(prompt_task, prompt_inputs)
     
     # Repeat prompts for num_samples times
-    prompts = [prompt for prompt in prompts for _ in range(num_samples)]
-    assert len(prompts) == num_examples * num_samples
+    # prompts = [prompt for prompt in prompts for _ in range(num_samples)]
+    total_prompts = sum(per_example_count)
+    assert len(prompts) == total_prompts
+    print(f"SIMQG: Generating {num_samples} samples for each of the {num_examples} examples, total {len(prompts)} prompts.")
     
     # Generate responses
     responses = call_openai_api(
@@ -91,7 +114,9 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
         top_p=top_p, 
         max_tokens=512
     )
-    assert len(responses) == num_examples * num_samples
+    assert len(responses) == total_prompts
+    for response in responses:
+        print("Generated Response:\n", response)
     
     # Parse generated inputs
     sim_inputs = []
