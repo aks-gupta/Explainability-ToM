@@ -57,7 +57,8 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
     
     # Prepare prompt inputs
     balanced = config.BALANCED
-    prompt_task = f'bbq-simqg-withcontext-balanced_{domain}' if with_context and balanced else (f'bbq-simqg-withcontext_{domain}' if with_context else f'bbq-simqg-nocontext_{domain}')
+    prompt_task = f'bbq-simqg-withcontext-balanced_{domain}' if with_context and balanced \
+        else (f'bbq-simqg-withcontext_{domain}' if with_context else f'bbq-simqg-nocontext_{domain}')
     # prompt_task = f'bbq-simqg-withcontext-balanced_{domain}' if with_context else f'bbq-simqg-nocontext_{domain}'
     prompt_inputs = []
     per_example_count = []
@@ -71,19 +72,31 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
 
         options = orig_input['options']
         k = len(options)
-        per_example_count.append(k)
-
-        # for _ in range(k):
-        print("Options:", options)
-        for option in options:
-            prompt_inputs.append({
-                'starter_context': orig_input['context'],
-                'starter_question': orig_input['question'],
-                'starter_options': options,
-                'target_option': option,
-                'starter_preferred_idx_plus_1': preferred_idx_plus_1,
-                'starter_reason': orig_tm_pred.get('pred_expl', '')
-            })
+        
+        if balanced:
+            per_example_count.append(k)
+            print("Options:", options)
+            for option in options:
+                prompt_inputs.append({
+                    'starter_context': orig_input['context'],
+                    'starter_question': orig_input['question'],
+                    'starter_options': options,
+                    'target_option': option,
+                    'starter_preferred_idx_plus_1': preferred_idx_plus_1,
+                    'starter_reason': orig_tm_pred.get('pred_expl', '')
+                })
+        
+        else:
+            per_example_count.append(num_samples)
+            for _ in range(num_samples):
+                prompt_inputs.append({
+                    'starter_context': orig_input['context'],
+                    'starter_question': orig_input['question'],
+                    'starter_options': options,
+                    'target_option': random.choice(options),
+                    'starter_preferred_idx_plus_1': preferred_idx_plus_1,
+                    'starter_reason': orig_tm_pred.get('pred_expl', '')
+                })
             
         # Create prompt input dict
         # prompt_input = {
@@ -102,7 +115,10 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
     # prompts = [prompt for prompt in prompts for _ in range(num_samples)]
     total_prompts = sum(per_example_count)
     assert len(prompts) == total_prompts
-    print(f"SIMQG: Generating {num_samples} samples for each of the {num_examples} examples, total {len(prompts)} prompts.")
+    if balanced:
+        print(f"SIMQG: Generating 1 sample per option for each of the {num_examples} examples, total {len(prompts)} prompts.")
+    else:
+        print(f"SIMQG: Generating {num_samples} samples for each of the {num_examples} examples, total {len(prompts)} prompts.")
     
     # Generate responses
     responses = call_openai_api(
@@ -187,11 +203,14 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
     
     # Group the generated outputs by examples
     example_siminputs = []
+    start_idx = 0
     for ex_idx in range(num_examples):
+        count = per_example_count[ex_idx]
         example_siminputs.append(
-            [sim_input for sim_input in sim_inputs[ex_idx * num_samples:(ex_idx + 1) * num_samples]
+            [sim_input for sim_input in sim_inputs[start_idx:start_idx + count]
              if sim_input is not None]
         )
+        start_idx += count
     
     assert len(example_siminputs) == num_examples
     return example_siminputs

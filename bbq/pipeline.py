@@ -41,10 +41,6 @@ if __name__ == '__main__':
 	NUM_EX = config.NUM_EX  # Number of examples
 	NUM_CF = config.NUM_CF  # Number of counterfactuals
 
-	# Explanation and context configurations
-	SUB_FOLDER = f'/outputs_context_explanation_ex_{NUM_EX}_cf_{NUM_CF}'
-	PATH = f'./outputs_{DOMAIN}{SUB_FOLDER}/'
-
 	# Load model configurations
 	taskqa_models = config.taskqa_models
 	expl_types = config.expl_types
@@ -53,9 +49,16 @@ if __name__ == '__main__':
 	simqg_mixed = config.MIXED # whether to mix outputs from different simqg models
 	context = config.WITH_CONTEXT # context while generating counterfactuals
 	explanation = config.EXPLANATION # explanation used in simqa by simulator model
-	stratified = config.STRATIFIED # stratified sampling in simqa
-	num_strat = config.STRAT_SAMPLES_PER_OPTION # number of stratified samples per option in simqa
-	total_strat = config.TOTAL_STRAT_SAMPLES # total number of stratified samples in simqa
+	balanced = config.BALANCED # balanced sampling in simqg
+
+	'''implement stratified sampling in simqa'''
+	# stratified = config.STRATIFIED # stratified sampling in simqa
+	# num_strat = config.STRAT_SAMPLES_PER_OPTION # number of stratified samples per option in simqa
+	# total_strat = config.TOTAL_STRAT_SAMPLES # total number of stratified samples in simqa
+
+	# Explanation and context configurations
+	SUB_FOLDER = f'/outputs_with_context_{context}_explanation_{explanation}_balanced_{balanced}_examples_{NUM_EX}_counterfactuals_{NUM_CF if not balanced else 3}'
+	PATH = f'./outputs_{DOMAIN}{SUB_FOLDER}/'
 
 	EX_IDXS = range(0, NUM_EX)  # Example indices
 	start_time = time.time()  # Start time for the entire script
