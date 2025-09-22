@@ -7,66 +7,21 @@ from task_qa import task_qa, task_qa_sim_inputs_list
 from simulate_qg import simulate_qg, mix_sim_inputs
 from simulate_qa import simulate_qa
 import openai
-import os
+from config import MODELS, EXPLANATION_TYPES, CUE_TYPE, EXAMPLE_RANGE, SIMQG_PARAMS, SIMQA_PARAMS, DATA_PATH, LOG_FILE, MIX_ENABLED
+from config import RUN_DIR, TASKQA_PATH, SIMQG_PATH, SIMQG_MIX_PATH, SIMQA_PATH, TASKQA_ON_SIM_PATH
 
 # =============================================================================
 # CONFIGURATION CONSTANTS
 # =============================================================================
 
-# Model configurations
-MODELS = {
-    'TASKQA': 'gpt-4o-mini',
-    'SIMQG': 'gpt-4o-mini', 
-    'SIMQA': 'gpt-4o-mini'
-}
-
-# Experiment parameters
-EXPLANATION_TYPES = ['cot']
-CUE_TYPE = 'concise'
-EXAMPLE_RANGE = range(5)
-SIMQG_PARAMS = {
-    'top_p': 1.0,
-    'num_samples': 2,
-    'with_context': True,
-    'balance_labels': True
-}
-SIMQA_PARAMS = {
-    'k_shot': 3,
-    'include_expl': True
-}
-
-# File paths
-DATA_PATH = './data/almanacs_harmful_requests.json'
-OUTPUTS_DIR = './outputs/new'
-LOG_FILE = 'log.txt'
-
-# Output file naming patterns  
 NUM_EXAMPLES = len(EXAMPLE_RANGE)
-FILE_PATTERNS = {
-    'taskqa': 'taskqa_{model}_{expl_type}_{cue}_test_{num_examples}.pkl',
-    'simqg': 'taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{balance}_{cue}_test_{num_examples}.pkl',
-    'simqg_mix': 'taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_mix_{top_p}_{with_context}_{balance}_{cue}_test_{num_examples}.pkl',
-    'simqa': 'taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{balance}-simqa_{simqa_model}_{k_shot}shot_fix_{cue}_test_{num_examples}.pkl',
-    'taskqa_on_sim': 'taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{balance}-taskqa_{taskqa_model}_{taskqa_expl_type}_{cue}_test_{num_examples}.pkl'
-}
 
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
 
-def ensure_output_dir():
-    """Create outputs directory if it doesn't exist."""
-    os.makedirs(OUTPUTS_DIR, exist_ok=True)
-
-def get_output_path(pattern_key, **kwargs):
-    """Generate output file path from pattern and parameters."""
-    pattern = FILE_PATTERNS[pattern_key]
-    kwargs['num_examples'] = NUM_EXAMPLES
-    if 'balance_labels' in kwargs:
-        kwargs['balance'] = 'balanced' if kwargs['balance_labels'] else 'unbalanced'
-        del kwargs['balance_labels']
-    filename = pattern.format(**kwargs)
-    return os.path.join(OUTPUTS_DIR, filename)
+def ensure_output_dir(path):
+    os.makedirs(path, exist_ok=True)
 
 def build_call_api():
     api_key = os.environ.get("LITELLM_API_KEY")
@@ -139,6 +94,8 @@ def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
     for pos, ex_idx in enumerate(remaining_idxs):
         all_preds[ex_idx] = preds[pos]
     
+    out_dir = os.path.dirname(out_file)
+    ensure_output_dir(out_dir)
     pkl.dump(all_preds, open(out_file, 'wb'))
     print(f"Saved results to {os.path.basename(out_file)}")
 
@@ -162,11 +119,7 @@ def run_taskqa_stage(test_inputs, log_file, call_api):
         for expl_type in EXPLANATION_TYPES:
             stage_start = time.time()
             
-            out_file = get_output_path('taskqa',
-                model=taskqa_model,
-                expl_type=expl_type,
-                cue=CUE_TYPE
-            )
+            out_file = TASKQA_PATH
             
             run_task_save_results(
                 task_function=task_qa,
@@ -194,22 +147,10 @@ def run_simqg_stage(test_inputs, log_file, call_api):
         stage_start = time.time()
         
         # Load TaskQA predictions
-        taskqa_file = get_output_path('taskqa',
-            model=taskqa_model,
-            expl_type=expl_type,
-            cue=CUE_TYPE
-        )
+        taskqa_file = TASKQA_PATH
         orig_tm_preds = pkl.load(open(taskqa_file, 'rb'))
         
-        out_file = get_output_path('simqg',
-            taskqa_model=taskqa_model,
-            taskqa_expl_type=expl_type,
-            simqg_model=simqg_model,
-            top_p=SIMQG_PARAMS['top_p'],
-            with_context=SIMQG_PARAMS['with_context'],
-            balance_labels=SIMQG_PARAMS['balance_labels'],
-            cue=CUE_TYPE
-        )
+        out_file = SIMQG_PATH
         
         run_task_save_results(
             task_function=simulate_qg,
@@ -220,16 +161,10 @@ def run_simqg_stage(test_inputs, log_file, call_api):
             orig_tm_preds=orig_tm_preds,
             top_p=SIMQG_PARAMS['top_p'],
             num_samples=SIMQG_PARAMS['num_samples'],
-            with_context=SIMQG_PARAMS['with_context'],
             balance_labels=SIMQG_PARAMS['balance_labels'],
             call_api=call_api
         )
         
-         # Check balance of generated questions immediately after SimQG
-        if SIMQG_PARAMS['balance_labels']:
-            from simulate_qg import check_simqg_balance
-            print(f"\nChecking question balance for {os.path.basename(out_file)}:")
-            check_simqg_balance(out_file)
         
         log_timing(log_file, f'SimQG-{taskqa_model}-{expl_type}-{simqg_model}', stage_start)
 
@@ -246,25 +181,10 @@ def run_simqg_mixing_stage(log_file):
         stage_start = time.time()
         
         # Load SimQG outputs
-        simqg_file = get_output_path('simqg',
-            taskqa_model=taskqa_model,
-            taskqa_expl_type=expl_type,
-            simqg_model=simqg_model,
-            top_p=SIMQG_PARAMS['top_p'],
-            with_context=SIMQG_PARAMS['with_context'],
-            balance_labels=SIMQG_PARAMS['balance_labels'],
-            cue=CUE_TYPE
-        )
+        simqg_file = SIMQG_PATH
         simqg_outputs = pkl.load(open(simqg_file, 'rb'))
         
-        out_file = get_output_path('simqg_mix',
-            taskqa_model=taskqa_model,
-            taskqa_expl_type=expl_type,
-            top_p=SIMQG_PARAMS['top_p'],
-            with_context=SIMQG_PARAMS['with_context'],
-            balance_labels=SIMQG_PARAMS['balance_labels'],
-            cue=CUE_TYPE
-        )
+        out_file = SIMQG_MIX_PATH
         
         # Mix outputs (currently mixing same model with itself)
         if os.path.exists(out_file):
@@ -297,34 +217,15 @@ def run_simqa_stage(test_inputs, log_file, call_api):
         stage_start = time.time()
         
         # Load required files
-        taskqa_file = get_output_path('taskqa',
-            model=taskqa_model,
-            expl_type=expl_type,
-            cue=CUE_TYPE
-        )
+        taskqa_file = TASKQA_PATH
         orig_tm_preds = pkl.load(open(taskqa_file, 'rb'))
         
-        simqg_mix_file = get_output_path('simqg_mix',
-            taskqa_model=taskqa_model,
-            taskqa_expl_type=expl_type,
-            top_p=SIMQG_PARAMS['top_p'],
-            with_context=SIMQG_PARAMS['with_context'],
-            balance_labels=SIMQG_PARAMS['balance_labels'],
-            cue=CUE_TYPE
-        )
-        sim_inputs_list = pkl.load(open(simqg_mix_file, 'rb'))
+        if MIX_ENABLED:
+            sim_inputs_list = pkl.load(open(SIMQG_MIX_PATH, 'rb'))
+        else:
+            sim_inputs_list = pkl.load(open(SIMQG_PATH, 'rb'))
         
-        out_file = get_output_path('simqa',
-            taskqa_model=taskqa_model,
-            taskqa_expl_type=expl_type,
-            simqg_model='mix',
-            top_p=SIMQG_PARAMS['top_p'],
-            with_context=SIMQG_PARAMS['with_context'],
-            balance_labels=SIMQG_PARAMS['balance_labels'],
-            simqa_model=simqa_model,
-            k_shot=SIMQA_PARAMS['k_shot'],
-            cue=CUE_TYPE
-        )
+        out_file = SIMQA_PATH
         
         run_task_save_results(
             task_function=simulate_qa,
@@ -335,7 +236,6 @@ def run_simqa_stage(test_inputs, log_file, call_api):
             orig_tm_preds=orig_tm_preds,
             sim_inputs_list=sim_inputs_list,
             k_shot=SIMQA_PARAMS['k_shot'],
-            include_expl=SIMQA_PARAMS['include_expl'],
             call_api=call_api
         )
         
@@ -353,25 +253,12 @@ def run_taskqa_on_sim_stage(log_file, call_api):
         stage_start = time.time()
         
         # Load simulated inputs
-        simqg_mix_file = get_output_path('simqg_mix',
-            taskqa_model=taskqa_model,
-            taskqa_expl_type=expl_type,
-            top_p=SIMQG_PARAMS['top_p'],
-            with_context=SIMQG_PARAMS['with_context'],
-            balance_labels=SIMQG_PARAMS['balance_labels'],
-            cue=CUE_TYPE
-        )
-        sim_inputs_list = pkl.load(open(simqg_mix_file, 'rb'))
+        if MIX_ENABLED:
+            sim_inputs_list = pkl.load(open(SIMQG_MIX_PATH, 'rb'))
+        else:
+            sim_inputs_list = pkl.load(open(SIMQG_PATH, 'rb'))
         
-        out_file = get_output_path('taskqa_on_sim',
-            taskqa_model=taskqa_model,
-            taskqa_expl_type=expl_type,
-            simqg_model='mix',
-            top_p=SIMQG_PARAMS['top_p'],
-            with_context=SIMQG_PARAMS['with_context'],
-            balance_labels=SIMQG_PARAMS['balance_labels'],
-            cue=CUE_TYPE
-        )
+        out_file = TASKQA_ON_SIM_PATH
         
         run_task_save_results(
             task_function=task_qa_sim_inputs_list,
@@ -398,7 +285,7 @@ def main():
     print(f"Examples: {len(EXAMPLE_RANGE)} ({EXAMPLE_RANGE.start}-{EXAMPLE_RANGE.stop-1})")
     
     # Setup
-    ensure_output_dir()
+    ensure_output_dir(RUN_DIR)
     
     # Initialize log file
     with open(LOG_FILE, 'w') as f:
@@ -407,8 +294,11 @@ def main():
         f.write('='*50 + '\n')
     
     # Load test data
-    test_inputs = json.load(open(DATA_PATH))['test']
+    test_inputs = json.load(open(DATA_PATH))['test'][:NUM_EXAMPLES]
     print(f"Loaded {len(test_inputs)} test examples")
+    for input in test_inputs:
+        print(input['context'])
+        print('-'*50)
     
     pipeline_start = time.time()
     
@@ -417,7 +307,8 @@ def main():
         # Run all pipeline stages
         run_taskqa_stage(test_inputs, LOG_FILE, call_api)
         run_simqg_stage(test_inputs, LOG_FILE, call_api)
-        run_simqg_mixing_stage(LOG_FILE)
+        if MIX_ENABLED:
+            run_simqg_mixing_stage(LOG_FILE)
         run_simqa_stage(test_inputs, LOG_FILE, call_api)
         run_taskqa_on_sim_stage(LOG_FILE, call_api)
         
@@ -429,7 +320,7 @@ def main():
         print(f"\n{'='*50}")
         print("PIPELINE COMPLETED SUCCESSFULLY!")
         print(f"Total time: {total_time} minutes")
-        print(f"Results saved in: {OUTPUTS_DIR}")
+        print(f"Results saved in: {RUN_DIR}")
         print(f"Log file: {LOG_FILE}")
         print(f"{'='*50}")
         

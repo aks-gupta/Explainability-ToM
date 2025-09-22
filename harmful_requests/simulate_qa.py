@@ -9,32 +9,30 @@ from copy import deepcopy
 sys.path.append('..')
 from prompts.load_prompt import get_prompts_by_task
 
-def extract_sim_qa_ans(sim_qa_expl, include_expl):
+PROMPT_TASK = 'almanacs-simqa'
+
+def extract_sim_qa_ans(sim_qa_expl):
     """
-    Extracts the final answer by searching for the phrase "So the answer is"
-    and then taking the following token. If the token is "yes" or "no" (ignoring punctuation
-    and case), it returns that token. Otherwise, it returns 'neither'.
+    Extracts the final answer. Returns 'yes', 'no', or 'neither'.
     """
-    if include_expl:
-        marker = "So the answer is"
-        if marker in sim_qa_expl:
-            tail = sim_qa_expl.split(marker, 1)[1].strip()
-            if tail:
-                token = tail.split()[0].strip(".,").lower()
-                if token in ["yes", "no"]:
-                    return token
-    else:
-        marker = "My Answer:"
-        if marker in sim_qa_expl:
-            tail = sim_qa_expl.split(marker, 1)[1].strip()
-            if tail:
-                token = tail.split()[0].strip(".,").lower()
-                if token in ["yes", "no"]:
-                    return token
-                    
+    response_lower = sim_qa_expl.lower()
+    
+    # Look for clear "yes" patterns
+    if ("so the answer is yes" in response_lower or 
+        "therefore, the answer is yes" in response_lower or
+        "the answer is yes" in response_lower):
+        return "yes"
+    
+    # Look for clear "no" patterns  
+    elif ("so the answer is no" in response_lower or
+          "therefore, the answer is no" in response_lower or
+          "the answer is no" in response_lower):
+        return "no"
+    
+    # If unclear, return "neither"
     return "neither"
         
-def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, k_shot=3, include_expl=True, majority_vote=None, call_api=None):
+def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, k_shot=3, call_api=None):
     """
     Build prompts with k-shot examples for SimQA.
     """
@@ -55,22 +53,15 @@ def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, k_shot=3, in
                 'sim_qn': sim_input.get('sim_qn', sim_input.get('question', ''))
             }
             
-            # Choose prompt template
-            prompt_task = 'almanacs-simqa-withexpl-new' if include_expl else 'almanacs-simqa-noexpl'
-            
             # Get k-shot prompt
-            prompt = get_k_shot_prompts_by_task(prompt_task, [prompt_data], k_shot=k_shot)[0]
+            prompt = get_k_shot_prompts_by_task(PROMPT_TASK, [prompt_data], k_shot=k_shot)[0]
             prompts.append(prompt)
     
     # Rest of your existing code stays exactly the same...
     deduplicated_prompts = list(set(prompts))
     
-    if majority_vote is None or majority_vote == 1:
-        pred_expls = call_api(model=model, prompts=deduplicated_prompts,
-                                     temperature=0.7, max_tokens=200, stop=None)
-    else:
-        pred_expls = call_api(model=model, prompts=deduplicated_prompts,
-                                     temperature=1, max_tokens=200, stop=None)
+    pred_expls = call_api(model=model, prompts=deduplicated_prompts,
+                                 temperature=0.9, max_tokens=200, stop=None)
     
     assert len(pred_expls) == len(deduplicated_prompts)
     
@@ -78,21 +69,9 @@ def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, k_shot=3, in
     pred_expls = [prompt2pred_expl[prompt] for prompt in prompts]
     assert len(pred_expls) == len(prompts)
     
-    if majority_vote is None or majority_vote == 1:
-        preds = []
-        for pred_expl in pred_expls:
-            preds.append({'pred_ans': extract_sim_qa_ans(pred_expl, include_expl), 'pred_expl': pred_expl})
-    else:
-        preds = []
-        for pred_expl_samples in pred_expls:
-            ex_preds = [{'pred_ans': extract_sim_qa_ans(pred_expl, include_expl), 'pred_expl': pred_expl}
-                        for pred_expl in pred_expl_samples]
-            ex_pred_answers = [pred['pred_ans'] for pred in ex_preds]
-            counter = Counter(ex_pred_answers)
-            max_count = np.max([counter[item] for item in counter])
-            most_frequent_answers = [ans for ans in counter if counter[ans] == max_count]
-            majority_ans = random.sample(most_frequent_answers, 1)[0]
-            preds.append({'pred_ans': majority_ans, 'majority_vote_details': ex_preds})
+    preds = []
+    for pred_expl in pred_expls:
+        preds.append({'pred_ans': extract_sim_qa_ans(pred_expl), 'pred_expl': pred_expl})
     
     example_preds = []
     cur = 0

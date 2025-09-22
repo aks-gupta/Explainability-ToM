@@ -4,6 +4,8 @@ import sys
 sys.path.append('..')
 from prompts.load_prompt import get_prompts_by_task
 
+PROMPT_TASK = 'almanacs-taskqa'
+
 def task_qa(model, expl_type, inputs, cue, call_api):
     """
     Process a list of inputs for the almanacs task.
@@ -14,7 +16,7 @@ def task_qa(model, expl_type, inputs, cue, call_api):
     assert expl_type in ['cot', 'posthoc']
     # Create prompts using your almanacs-taskqa prompt templates.
     prompts = get_prompts_by_task(
-        f'almanacs-taskqa-{cue}',
+        f'{PROMPT_TASK}-{cue}',
         [{'context': input['context']} for input in inputs]
     )
     # Deduplicate prompts to improve efficiency.
