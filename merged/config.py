@@ -1,3 +1,4 @@
+DATASET = 'bbq'
 DOMAIN = 'raceXGender'
 PROMPT_FILE = 'prompts_bbq_raceXGender.json'
 DATA_FILE = 'data_bbq.json'
@@ -20,6 +21,7 @@ simqa_models = ["gpt-4o-mini"]
 
 def print_configs():
     print("\n\033[1mCurrent Configurations:\033[0m")
+    print(f"DATASET: {DATASET}")
     print(f"DOMAIN: {DOMAIN}")
     print(f"NUM_EX: {NUM_EX}")
     print(f"EX_IDXS: {list(EX_IDXS)}")

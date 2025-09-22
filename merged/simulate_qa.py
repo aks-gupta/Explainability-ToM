@@ -2,36 +2,9 @@ import json
 import sys
 sys.path.append('.')
 from prompts.load_prompt import get_prompts_by_task
-import openai
-import time
-import os
 import config
 
-client = openai.OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-    base_url="https://cmu.litellm.ai",
-)
-
-def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p=1.0, max_tokens=200, stop=None):
-    responses = []
-    for i, prompt in enumerate(prompts):
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                top_p=top_p,
-                max_tokens=max_tokens,
-                stop=stop
-            )
-            responses.append(response.choices[0].message.content)
-        except Exception as e:
-            print(f"[{i}] Error during call:\nPrompt: {prompt[:100]}...\nError: {e}")
-            responses.append("")
-            time.sleep(1)
-    return responses
-
-def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, domain):
+def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, domain, call_api=None):
     """
     Simulates QA for BBQ dataset, predicting which option the robot would choose for simulated inputs
     
@@ -50,7 +23,9 @@ def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, domain):
     num_examples = len(orig_inputs)
     
     # Create prompts using BBQ-specific format
-    prompts = get_prompts_by_task(f'bbq-simqa-expl_{domain}' if explanation else f'bbq-simqa_noexpl_{domain}',
+    dataset = config.DATASET
+    prompt_key = f'{dataset}-simqa-expl_{domain}' if explanation else f'{dataset}-simqa_noexpl_{domain}'
+    prompts = get_prompts_by_task(prompt_key,
                                   [{'starter_context': orig_input['context'],
                                     'starter_question': orig_input['question'],
                                     'starter_options': orig_input['options'],
@@ -71,9 +46,8 @@ def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, domain):
     print(f"SIMQA: Total {len(prompts)} prompts, {len(deduplicated_prompts)} unique prompts.")
     
     # Call the API with deduplicated prompts
-    pred_expls = call_openai_api(model=model, prompts=deduplicated_prompts,
-                                 bsz=8, num_processes=12,
-                                 temperature=0, max_tokens=100, stop='\n\n')
+    pred_expls = call_api(model=model, prompts=deduplicated_prompts,
+                          temperature=0, max_tokens=100, stop='\n\n')
     assert len(pred_expls) == len(deduplicated_prompts)
     
     # Add duplicate prompts back
@@ -151,9 +125,8 @@ def simulate_qa_direct_examples(model, orig_input, orig_tm_pred, eval_examples, 
                                    k_shot=None)
     
     # Call the API
-    pred_expls = call_openai_api(model=model, prompts=prompts,
-                                 bsz=8, num_processes=12,
-                                 temperature=0, max_tokens=100, stop='\n\n')
+    pred_expls = call_api(model=model, prompts=prompts,
+                          temperature=0, max_tokens=100, stop='\n\n')
     
     # Extract answers (same logic as original simulate_qa)
     pred_answers = []

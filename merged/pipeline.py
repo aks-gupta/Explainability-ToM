@@ -10,6 +10,30 @@ from simulate_qg import simulate_qg, mix_sim_inputs
 from simulate_qa import simulate_qa
 import config
 from calculate_precision import calculate_precision
+import openai
+
+# Single shared API client and flat call function
+API_KEY = os.environ.get("LITELLM_API_KEY") or os.environ.get("OPENAI_API_KEY")
+BASE_URL = os.environ.get("LITELLM_BASE_URL", "https://cmu.litellm.ai")
+_client = openai.OpenAI(api_key=API_KEY, base_url=BASE_URL)
+
+def call_openai_api(model, prompts, temperature=0, top_p=1.0, max_tokens=200, stop=None, bsz=1, num_processes=1):
+	responses = []
+	for prompt in prompts:
+		try:
+			response = _client.chat.completions.create(
+				model=model,
+				messages=[{"role": "user", "content": prompt}],
+				temperature=temperature,
+				top_p=top_p,
+				max_tokens=max_tokens,
+				stop=stop
+			)
+			responses.append(response.choices[0].message.content)
+		except Exception as e:
+			print(f"Error calling API: {e}")
+			responses.append("")
+	return responses
 
 # Run a task function, save results to a file, and handle already processed examples
 def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
@@ -78,7 +102,7 @@ if __name__ == '__main__':
 		for taskqa_expl_type in expl_types:
 			out_file = f'{PATH}taskqa_{taskqa_model}_{taskqa_expl_type}_{DOMAIN}_{NUM_EX}.pkl'
 			run_task_save_results(task_function=task_qa, out_file=out_file, ex_idxs=EX_IDXS,
-								  model=taskqa_model, expl_type=taskqa_expl_type, inputs=test_inputs, domain=DOMAIN)
+							  model=taskqa_model, expl_type=taskqa_expl_type, inputs=test_inputs, domain=DOMAIN, call_api=call_openai_api)
 			print("\033[1mCompleted TaskQA for model:\033[0m", taskqa_model, 
 				  "\033[1mexplanation type:\033[0m", taskqa_expl_type)
 			f_log.write(f'TaskQA-{taskqa_model}-{taskqa_expl_type} {(time.time() - timestamp)//60} minutes\n')
@@ -95,7 +119,7 @@ if __name__ == '__main__':
 						orig_tm_preds = pkl.load(open(f'{PATH}taskqa_{taskqa_model}_{taskqa_expl_type}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
 						run_task_save_results(task_function=simulate_qg, ex_idxs=EX_IDXS, out_file=out_file,
 											  model=simqg_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
-											  top_p=top_p, num_samples=NUM_CF, with_context=with_context, domain=DOMAIN)
+											  top_p=top_p, num_samples=NUM_CF, with_context=with_context, domain=DOMAIN, call_api=call_openai_api)
 						print("\033[1mCompleted SimQG for TaskQA model:\033[0m", taskqa_model, 
 							  "\033[1mexplanation type:\033[0m", taskqa_expl_type,
 							  "\033[1mSimQG model:\033[0m", simqg_model, 
@@ -139,8 +163,8 @@ if __name__ == '__main__':
 							sim_inputs_list = pkl.load(open(
 								f'{PATH}taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
 							run_task_save_results(task_function=simulate_qa, ex_idxs=EX_IDXS, out_file=out_file,
-												  model=simqa_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
-												  sim_inputs_list=sim_inputs_list, domain=DOMAIN)
+											  model=simqa_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
+											  sim_inputs_list=sim_inputs_list, domain=DOMAIN, call_api=call_openai_api)
 							print("\033[1mCompleted SimQA for TaskQA model:\033[0m", taskqa_model, 
 								  "\033[1mexplanation type:\033[0m", taskqa_expl_type,
 								  "\033[1mSimQG model:\033[0m", simqg_model, 
@@ -161,7 +185,7 @@ if __name__ == '__main__':
 						sim_inputs_list = pkl.load(open(
 							f'{PATH}taskqa_{taskqa_model}_{taskqa_expl_type}-simqg_{simqg_model}_{top_p}_{with_context}_{DOMAIN}_{NUM_EX}.pkl', 'rb'))
 						run_task_save_results(task_function=task_qa_sim_inputs_list, ex_idxs=EX_IDXS, out_file=out_file,
-											  model=taskqa_model, expl_type=taskqa_expl_type, sim_inputs_list=sim_inputs_list, domain=DOMAIN)
+											  model=taskqa_model, expl_type=taskqa_expl_type, sim_inputs_list=sim_inputs_list, domain=DOMAIN, call_api=call_openai_api)
 						print("\033[1mCompleted TaskQA on Simulated Inputs for TaskQA model:\033[0m", taskqa_model,
 							  "\033[1mexplanation type:\033[0m", taskqa_expl_type, 
 							  "\033[1mSimQG model:\033[0m", simqg_model,

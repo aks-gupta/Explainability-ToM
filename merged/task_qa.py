@@ -3,38 +3,15 @@ import sys
 sys.path.append('.')
 # from api_wrapper.api_wrapper import multiprocess_api
 from prompts.load_prompt import get_prompts_by_task
-import openai
-import time
-import os
+import config
 import re
 
-client = openai.OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-    base_url="https://cmu.litellm.ai",
-)
-
-def call_openai_api(model, prompts, temperature=0, max_tokens=200, stop=None):
-    responses = []
-    for prompt in prompts:
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                max_tokens=max_tokens,
-                stop=stop,
-            )
-            responses.append(response.choices[0].message.content)
-        except Exception as e:
-            print(f"Error calling OpenAI API: {e}")
-            responses.append("")
-            time.sleep(1)
-    return responses
-
-def task_qa(model, expl_type, inputs, domain):
+def task_qa(model, expl_type, inputs, domain, call_api=None):
     print(f"\n\033[1mRunning TaskQA\033[0m with model={model}, expl_type={expl_type}, domain={domain} on {len(inputs)} inputs.")
     assert expl_type in ['cot', 'posthoc']
-    prompts = get_prompts_by_task(f'bbq-taskqa-{expl_type}_{domain}',
+    dataset = config.DATASET
+    task_key = f'{dataset}-taskqa-{expl_type}_{domain}'
+    prompts = get_prompts_by_task(task_key,
                 [{'context': input['context'],
                   'question': input['question'], 
                   'options': input['options']}
@@ -48,8 +25,8 @@ def task_qa(model, expl_type, inputs, domain):
     # resp = call_openai_api("gpt-4o-mini", ["Say Testing OpenAI API Connection!"])
     # print(resp)
 
-    responses = call_openai_api(model=model, prompts=deduplicated_prompts,
-                                temperature=0, max_tokens=200, stop='\n\n')
+    responses = call_api(model=model, prompts=deduplicated_prompts,
+                         temperature=0, max_tokens=200, stop='\n\n')
     assert len(responses) == len(deduplicated_prompts)
     prompt2response = {prompt: response for prompt, response in zip(deduplicated_prompts, responses)}
     responses = [prompt2response[prompt] for prompt in prompts]
@@ -84,9 +61,9 @@ def task_qa(model, expl_type, inputs, domain):
     
     return answers
 
-def task_qa_sim_inputs_list(model, expl_type, sim_inputs_list, domain):
+def task_qa_sim_inputs_list(model, expl_type, sim_inputs_list, domain, call_api=None):
     all_sim_inputs = [input for sim_inputs in sim_inputs_list for input in sim_inputs]
-    preds = task_qa(model, expl_type, all_sim_inputs, domain)
+    preds = task_qa(model, expl_type, all_sim_inputs, domain, call_api=call_api)
     # regroup preds according to examples (multiple simulation inputs for each original input)
     example_preds = []
     cur = 0

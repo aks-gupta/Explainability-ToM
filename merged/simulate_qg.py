@@ -5,37 +5,10 @@ sys.path.append('.')
 from prompts.load_prompt import get_prompts_by_task
 from copy import deepcopy
 import random
-import openai
-import time
-import os
 import config
 
-client = openai.OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-    base_url="https://cmu.litellm.ai",
-)
 
-def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p=1.0, max_tokens=200, stop=None):
-    responses = []
-    for i, prompt in enumerate(prompts):
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                top_p=top_p,
-                max_tokens=max_tokens,
-                stop=stop
-            )
-            responses.append(response.choices[0].message.content)
-        except Exception as e:
-            print(f"[{i}] Error during call:\nPrompt: {prompt[:100]}...\nError: {e}")
-            responses.append("")
-            time.sleep(1)
-    return responses
-
-
-def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context, domain):
+def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context, domain, call_api=None):
     """
     Generate simulated BBQ examples using a language model.
     
@@ -57,8 +30,9 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
     
     # Prepare prompt inputs
     balanced = config.BALANCED
-    prompt_task = f'bbq-simqg-withcontext-balanced_{domain}' if with_context and balanced \
-        else (f'bbq-simqg-withcontext_{domain}' if with_context else f'bbq-simqg-nocontext_{domain}')
+    dataset = config.DATASET
+    prompt_task = f'{dataset}-simqg-withcontext-balanced_{domain}' if with_context and balanced \
+            else (f'{dataset}-simqg-withcontext_{domain}' if with_context else f'{dataset}-simqg-nocontext_{domain}')
     # prompt_task = f'bbq-simqg-withcontext-balanced_{domain}' if with_context else f'bbq-simqg-nocontext_{domain}'
     prompt_inputs = []
     per_example_count = []
@@ -121,11 +95,9 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
         print(f"SIMQG: Generating {num_samples} samples for each of the {num_examples} examples, total {len(prompts)} prompts.")
     
     # Generate responses
-    responses = call_openai_api(
+    responses = call_api(
         model=model, 
         prompts=prompts, 
-        bsz=8, 
-        num_processes=12,
         temperature=1, 
         top_p=top_p, 
         max_tokens=512
