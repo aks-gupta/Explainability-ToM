@@ -5,7 +5,7 @@ import pickle as pkl
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from configs import GENERAL_CONFIGS, MODEL_CONFIGS
-from label_balanced_counterfactuals_generation_pipeline import run_counterfactual_generation_pipeline
+from label_balanced_counterfactuals_generation_utils import run_counterfactual_generation_pipeline
 
 counterfactual_code_generation = GENERAL_CONFIGS['counterfactuals']
 num_counterfactual_qs = GENERAL_CONFIGS['num_counterfactual_qs']
