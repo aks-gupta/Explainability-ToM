@@ -14,11 +14,18 @@ EX_IDXS = range(0, num_examples)
 
 assert counterfactual_code_generation=='LABEL_BALANCED'
 
-#Step 1: Run the pipeline to get all data
+#Step 1: Run the pipeline to get all data (if no data in data/ folder)
 # step_1_out, step_2_out, step_4_out = run_counterfactual_generation_pipeline()
-step_1_out = 'data/hiring_decisions_task_qa_out_gpt-4o-mini_cot_2.pkl'
-step_2_out = 'data/hiring_decisions_simulation_question_gen_out_gpt-4o-mini_simqg_gpt-4o-mini_cot_2.pkl'
-step_4_out = 'data/hiring_decisions_task_qa_simulation_questions_out_gpt-4o-mini_simqg_gpt-4o-mini_taskqa_gpt-4o-mini_cot_2.pkl'
+
+# Task Model: GPT 4 output 
+# step_1_out = 'data/hiring_decisions_task_qa_out_gpt-4o-mini_cot_2.pkl'
+# step_2_out = 'data/hiring_decisions_simulation_question_gen_out_gpt-4o-mini_simqg_gpt-4o-mini_cot_2.pkl'
+# step_4_out = 'data/hiring_decisions_task_qa_simulation_questions_out_gpt-4o-mini_simqg_gpt-4o-mini_taskqa_gpt-4o-mini_cot_2.pkl'
+
+# Task Model: Llama output
+step_1_out = 'data/hiring_decisions_task_qa_out_meta-llama_cot_2.pkl'
+step_2_out = 'data/hiring_decisions_simulation_question_gen_out_meta-llama_simqg_gpt-4o-mini_cot_2.pkl'
+step_4_out = 'data/hiring_decisions_task_qa_simulation_questions_out_meta-llama_simqg_gpt-4o-mini_taskqa_meta-llama_cot_2.pkl'
 
 #Step 1: Parse all the questions and its corresponding answers from pickle file
 with open(step_2_out, "rb") as f:

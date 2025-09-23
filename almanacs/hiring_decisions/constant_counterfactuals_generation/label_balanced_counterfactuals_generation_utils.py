@@ -22,7 +22,7 @@ def run_counterfactual_generation_pipeline():
         for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
         # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:     
             test_inputs = json.load(open('./data/data_hiring_decisions.json'))['fixed']
-            step_1_out = f'data/{GENERAL_CONFIGS['step_1_out']}_{taskqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
+            step_1_out = f'data/{GENERAL_CONFIGS['step_1_out']}_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
             run_task_save_results(task_function=task_qa_hiring_decisions, out_file=step_1_out, ex_idxs=EX_IDXS,
                                     model=taskqa_model, expl_type=taskqa_expl_type, inputs=test_inputs)
     print(step_1_out)
@@ -33,7 +33,7 @@ def run_counterfactual_generation_pipeline():
             for simqg_model in MODEL_CONFIGS['simqg_model']:
                 for explanation in ['withexpl']:
                     for top_p in [1.0]:
-                        step_2_out = f'data/{GENERAL_CONFIGS['step_2_out']}_{taskqa_model}_simqg_{simqg_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
+                        step_2_out = f'data/{GENERAL_CONFIGS['step_2_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
                         orig_inputs = json.load(open('./data/data_hiring_decisions.json'))['fixed']
                         orig_tm_preds = pkl.load(open(step_1_out, 'rb'))
                         run_task_save_results(task_function=simulate_qg_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_2_out,
@@ -47,7 +47,7 @@ def run_counterfactual_generation_pipeline():
             for simqg_model in MODEL_CONFIGS['simqg_model']:
                 for explanation in ['withexpl']:
                     for top_p in [1.0]:
-                        step_4_out = f'data/{GENERAL_CONFIGS['step_4_out']}_{taskqa_model}_simqg_{simqg_model}_taskqa_{taskqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
+                        step_4_out = f'data/{GENERAL_CONFIGS['step_4_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model}_taskqa_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
                         sim_inputs_list = pkl.load(open(step_2_out, 'rb'))
                         run_task_save_results(task_function=task_qa_hiring_decisions_sim_inputs_list, ex_idxs=EX_IDXS, out_file=step_4_out,
                                                 model=taskqa_model, expl_type=taskqa_expl_type, sim_inputs_list=sim_inputs_list)
