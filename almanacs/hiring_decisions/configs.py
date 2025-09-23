@@ -10,7 +10,7 @@ GENERAL_CONFIGS = {
 }
 
 MODEL_CONFIGS = {
-    'taskqa_model': ['gpt-4o-mini'],
+    'taskqa_model': ['meta-llama/Llama-3.3-70B-Instruct-Turbo-Free'], #['meta-llama/Llama-3.3-70B-Instruct-Turbo-Free', 'gpt-4o-mini'],
     'taskqa_expl_type': ['cot'], #'concise', 'detailed', 'toxic', 'nontoxic'
     'simqg_model': ['gpt-4o-mini'],
     'simqa_model': ['gpt-4o-mini']

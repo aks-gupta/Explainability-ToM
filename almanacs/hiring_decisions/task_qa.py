@@ -1,33 +1,12 @@
 import json
 import sys
 import os
+from api_client import call_together_api, call_openai_api
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from prompts.load_prompt import get_prompts_by_task
 from openai import OpenAI
 import time
-
-client = OpenAI(
-    api_key=os.environ.get("LITELLM_API_KEY"),
-    base_url="https://cmu.litellm.ai",
-)
-
-def call_openai_api(model, prompts, temperature=0, max_tokens=200, stop=None):
-    responses = []
-    for prompt in prompts:
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                max_tokens=max_tokens,
-                stop=stop,
-            )
-            responses.append(response.choices[0].message.content)
-        except Exception as e:
-            print(f"Error calling OpenAI API: {e}")
-            responses.append("")
-            time.sleep(1)
-    return responses
 
 def task_qa_hiring_decisions(model, expl_type, inputs):
     print(model)
@@ -41,7 +20,7 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
     distinct_inputs = [{'question': question} for question in distinct_qns]
     prompts = get_prompts_by_task(f'almanacs-hiring-decisions-taskqa-{expl_type}',
                                   [{'question': input['question']} for input in distinct_inputs])
-    pred_expls = call_openai_api(model=model, prompts=prompts,
+    pred_expls = call_together_api(model=model, prompts=prompts,
                                 temperature=0, max_tokens=200, stop='\n\n')
     assert len(pred_expls) == len(prompts)
     if expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
