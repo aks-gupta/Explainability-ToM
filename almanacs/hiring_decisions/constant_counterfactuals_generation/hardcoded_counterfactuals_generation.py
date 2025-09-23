@@ -1,8 +1,11 @@
 import json 
-from configs import GENERAL_CONFIGS
 import pickle as pkl
 import os
+import sys
 import random
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from configs import GENERAL_CONFIGS
 
 counterfactual_code_generation = GENERAL_CONFIGS['counterfactuals']
 num_counterfactual_qs = GENERAL_CONFIGS['num_examples']
@@ -23,7 +26,7 @@ for idx, q in enumerate(top_k_questions, 0):
     all_qs[idx]={}
     all_qs[idx]['questions']=[q]
 
-out_file = f'data/fixed_counterfactuals.pkl'
+out_file = f'data/hardcoded_counterfactuals.pkl'
 
 # Make sure the directory exists
 os.makedirs(os.path.dirname(out_file), exist_ok=True)

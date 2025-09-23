@@ -25,8 +25,8 @@ if __name__ == '__main__':
 
 	setting2exidx2precision = {}
 	for taskqa_model in ['gpt-4o-mini']:
-		# for taskqa_expl_type in ['cot']:
-		for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+		for taskqa_expl_type in ['cot']:
+		# for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
 			for explanation in ['withexpl']:
 				print("-------" + str(taskqa_expl_type) + "--------")
 				print(explanation)
@@ -47,7 +47,10 @@ if __name__ == '__main__':
 						count+=1
 				print(simans_count)
 
-				step_4_out = f'{full_path}/{GENERAL_CONFIGS['step_4_out']}_{taskqa_model}_simqg_{simqg_model}_taskqa_{taskqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
+				if GENERAL_CONFIGS['counterfactuals']=="LABEL_BALANCED":
+					step_4_out = f'data/label_balanced_counterfactuals_answers.pkl'
+				else:
+					step_4_out = f'{full_path}/{GENERAL_CONFIGS['step_4_out']}_{taskqa_model}_simqg_{simqg_model}_taskqa_{taskqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
 				print(step_4_out)
 
 				exidx2qns_taskans = pkl.load(
