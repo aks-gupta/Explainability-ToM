@@ -7,8 +7,10 @@ from task_qa import task_qa, task_qa_sim_inputs_list
 from simulate_qg import simulate_qg, mix_sim_inputs
 from simulate_qa import simulate_qa
 import openai
+from together import Together
 from config import MODELS, EXPLANATION_TYPES, CUE_TYPE, EXAMPLE_RANGE, SIMQG_PARAMS, SIMQA_PARAMS, DATA_PATH, LOG_FILE, MIX_ENABLED
 from config import RUN_DIR, TASKQA_PATH, SIMQG_PATH, SIMQG_MIX_PATH, SIMQA_PATH, TASKQA_ON_SIM_PATH
+from config import FIXED_SIMQG, FIXED_SIMQG_PATH
 
 # =============================================================================
 # CONFIGURATION CONSTANTS
@@ -23,27 +25,43 @@ NUM_EXAMPLES = len(EXAMPLE_RANGE)
 def ensure_output_dir(path):
     os.makedirs(path, exist_ok=True)
 
-def build_call_api():
-    api_key = os.environ.get("LITELLM_API_KEY")
-    client = openai.OpenAI(api_key=api_key, base_url="https://cmu.litellm.ai")
-    def call_api(model, prompts, temperature=0, top_p=1.0, max_tokens=200, stop=None):
-        responses = []
-        for prompt in prompts:
-            try:
-                r = client.chat.completions.create(
-                    model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=temperature,
-                    top_p=top_p,
-                    max_tokens=max_tokens,
-                    stop=stop
-                )
-                responses.append(r.choices[0].message.content)
-            except Exception as e:
-                print(f"Error calling API: {e}")
-                responses.append("")
-        return responses
-    return call_api
+def call_openai_api(model, prompts, temperature=0, top_p=1.0, max_tokens=200, stop=None):
+    client_openai = openai.OpenAI(api_key=os.environ.get("LITELLM_API_KEY") or os.environ.get("OPENAI_API_KEY"), base_url="https://cmu.litellm.ai")
+    responses = []
+    for prompt in prompts:
+        try:
+            r = client_openai.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=temperature,
+                top_p=top_p,
+                max_tokens=max_tokens,
+                stop=stop
+            )
+            responses.append(r.choices[0].message.content)
+        except Exception as e:
+            print(f"Error calling API: {e}")
+            responses.append("")
+    return responses
+
+def call_together_api(model, prompts, temperature=0, top_p=1.0, max_tokens=200, stop=None):
+    client_together = Together(api_key=os.environ.get("TOGETHER_API_KEY"))
+    responses = []
+    for prompt in prompts:
+        try:
+            r = client_together.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=temperature,
+                top_p=top_p,
+                max_tokens=max_tokens,
+                stop=stop
+            )
+            responses.append(r.choices[0].message.content)
+        except Exception as e:
+            print(f"Error calling API: {e}")
+            responses.append("")
+    return responses
 
 def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
     """
@@ -152,18 +170,21 @@ def run_simqg_stage(test_inputs, log_file, call_api):
         
         out_file = SIMQG_PATH
         
-        run_task_save_results(
-            task_function=simulate_qg,
-            out_file=out_file,
-            ex_idxs=EXAMPLE_RANGE,
-            model=simqg_model,
-            orig_inputs=test_inputs,
-            orig_tm_preds=orig_tm_preds,
-            top_p=SIMQG_PARAMS['top_p'],
-            num_samples=SIMQG_PARAMS['num_samples'],
-            balance_labels=SIMQG_PARAMS['balance_labels'],
-            call_api=call_api
-        )
+        if FIXED_SIMQG:
+            print("FIXED_SIMQG enabled; skipping SimQG generation.")
+        else:
+            run_task_save_results(
+                task_function=simulate_qg,
+                out_file=out_file,
+                ex_idxs=EXAMPLE_RANGE,
+                model=simqg_model,
+                orig_inputs=test_inputs,
+                orig_tm_preds=orig_tm_preds,
+                top_p=SIMQG_PARAMS['top_p'],
+                num_samples=SIMQG_PARAMS['num_samples'],
+                balance_labels=SIMQG_PARAMS['balance_labels'],
+                call_api=call_api
+            )
         
         
         log_timing(log_file, f'SimQG-{taskqa_model}-{expl_type}-{simqg_model}', stage_start)
@@ -220,10 +241,11 @@ def run_simqa_stage(test_inputs, log_file, call_api):
         taskqa_file = TASKQA_PATH
         orig_tm_preds = pkl.load(open(taskqa_file, 'rb'))
         
-        if MIX_ENABLED:
+        if MIX_ENABLED and not FIXED_SIMQG:
             sim_inputs_list = pkl.load(open(SIMQG_MIX_PATH, 'rb'))
         else:
-            sim_inputs_list = pkl.load(open(SIMQG_PATH, 'rb'))
+            sim_path = FIXED_SIMQG_PATH if FIXED_SIMQG else SIMQG_PATH
+            sim_inputs_list = pkl.load(open(sim_path, 'rb'))
         
         out_file = SIMQA_PATH
         
@@ -253,10 +275,11 @@ def run_taskqa_on_sim_stage(log_file, call_api):
         stage_start = time.time()
         
         # Load simulated inputs
-        if MIX_ENABLED:
+        if MIX_ENABLED and not FIXED_SIMQG:
             sim_inputs_list = pkl.load(open(SIMQG_MIX_PATH, 'rb'))
         else:
-            sim_inputs_list = pkl.load(open(SIMQG_PATH, 'rb'))
+            sim_path = FIXED_SIMQG_PATH if FIXED_SIMQG else SIMQG_PATH
+            sim_inputs_list = pkl.load(open(sim_path, 'rb'))
         
         out_file = TASKQA_ON_SIM_PATH
         
@@ -303,14 +326,13 @@ def main():
     pipeline_start = time.time()
     
     try:
-        call_api = build_call_api()
         # Run all pipeline stages
-        run_taskqa_stage(test_inputs, LOG_FILE, call_api)
-        run_simqg_stage(test_inputs, LOG_FILE, call_api)
-        if MIX_ENABLED:
+        run_taskqa_stage(test_inputs, LOG_FILE, call_openai_api)
+        run_simqg_stage(test_inputs, LOG_FILE, call_openai_api)
+        if MIX_ENABLED and not FIXED_SIMQG:
             run_simqg_mixing_stage(LOG_FILE)
-        run_simqa_stage(test_inputs, LOG_FILE, call_api)
-        run_taskqa_on_sim_stage(LOG_FILE, call_api)
+        run_simqa_stage(test_inputs, LOG_FILE, call_openai_api)
+        run_taskqa_on_sim_stage(LOG_FILE, call_openai_api)
         
         # Log completion
         total_time = (time.time() - pipeline_start) // 60
