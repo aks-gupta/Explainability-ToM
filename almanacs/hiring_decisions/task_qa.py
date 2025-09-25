@@ -5,6 +5,7 @@ from api_client import call_together_api, call_openai_api
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from prompts.load_prompt import get_prompts_by_task
+from configs import DATASET, DOMAIN
 from openai import OpenAI
 import time
 
@@ -18,7 +19,7 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
         else:
             distinct_qns.append(input)
     distinct_inputs = [{'question': question} for question in distinct_qns]
-    prompts = get_prompts_by_task(f'almanacs-hiring-decisions-taskqa-{expl_type}',
+    prompts = get_prompts_by_task(f'{DATASET}-{DOMAIN}-taskqa-{expl_type}',
                                   [{'question': input['question']} for input in distinct_inputs])
     pred_expls = call_together_api(model=model, prompts=prompts,
                                 temperature=0, max_tokens=200, stop='\n\n')

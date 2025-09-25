@@ -12,8 +12,10 @@ def list_files_in_folder(folder_path):
         return max_version
     except FileNotFoundError:
         print(f"The folder '{folder_path}' does not exist.")
+        return 0
     except PermissionError:
         print(f"Permission denied to access '{folder_path}'.")
+        return 0
 
 def create_folder(parent_directory, new_folder_name):
     # Construct the full path

@@ -2,6 +2,7 @@ import json
 import sys
 sys.path.append('..')
 from prompts.load_prompt import get_prompts_by_task
+from configs import DATASET, DOMAIN
 from api_client import call_together_api, call_openai_api
 from configs import GENERAL_CONFIGS
 from openai import OpenAI
@@ -38,7 +39,7 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 	
 	if include_expl:
 		prompts = get_prompts_by_task(
-			'almanacs-hiring-decisions-simqa-withexpl',
+			f'{DATASET}-{DOMAIN}-simqa-withexpl',
 			[
 				{
 					'orig_qn': orig_input['question'],
@@ -52,7 +53,7 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 		)
 	else:
 		prompts = get_prompts_by_task(
-			'almanacs-hiring-decisions-simqa-withoutexpl',
+			f'{DATASET}-{DOMAIN}-simqa-withoutexpl',
 			[
 				{
 					'orig_qn': orig_input['question'],

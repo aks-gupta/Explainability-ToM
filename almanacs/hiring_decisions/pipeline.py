@@ -9,7 +9,7 @@ from task_qa import task_qa_hiring_decisions, task_qa_hiring_decisions_sim_input
 from simulate_qg import mix_sim_inputs, simulate_qg_hiring_decisions
 from simulate_qa import simulate_qa_hiring_decisions
 from utilities import create_folder_based_on_version
-from configs import GENERAL_CONFIGS, MODEL_CONFIGS
+from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DATASET, DOMAIN, DATA_FILE
 
 
 def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
@@ -45,12 +45,15 @@ def main():
 
     EX_IDXS = range(0, num_examples)
 
+    def sanitize(name):
+        return str(name).replace('/', '-').replace(':', '-')
+
     # TaskQA
     for taskqa_model in MODEL_CONFIGS['taskqa_model']:
         for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
         # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:     
-            test_inputs = json.load(open('./data/data_hiring_decisions.json'))['test']
-            step_1_out = f'{full_path}/{GENERAL_CONFIGS['step_1_out']}_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
+            test_inputs = json.load(open(DATA_FILE))['test']
+            step_1_out = f"{full_path}/{GENERAL_CONFIGS['step_1_out']}_{sanitize(taskqa_model)}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
             run_task_save_results(task_function=task_qa_hiring_decisions, out_file=step_1_out, ex_idxs=EX_IDXS,
 									model=taskqa_model, expl_type=taskqa_expl_type, inputs=test_inputs)
             print(step_1_out)
@@ -67,8 +70,8 @@ def main():
                 for simqg_model in MODEL_CONFIGS['simqg_model']:
                     for explanation in ['withexpl']:
                         for top_p in [1.0]:
-                            step_2_out = f'{full_path}/{GENERAL_CONFIGS['step_2_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
-                            orig_inputs = json.load(open('./data/data_hiring_decisions.json'))['test']
+                            step_2_out = f"{full_path}/{GENERAL_CONFIGS['step_2_out']}_{sanitize(taskqa_model)}_simqg_{sanitize(simqg_model)}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
+                            orig_inputs = json.load(open(DATA_FILE))['test']
                             orig_tm_preds = pkl.load(open(step_1_out, 'rb'))
                             run_task_save_results(task_function=simulate_qg_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_2_out,
                                                     model=simqg_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
@@ -83,8 +86,8 @@ def main():
                 for explanation in ['withexpl']:
                     for top_p in [1.0]:
                         for simqa_model in MODEL_CONFIGS['simqa_model']:
-                            step_3_out = f'{full_path}/{GENERAL_CONFIGS['step_3_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model}_simqa_{simqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
-                            orig_inputs = json.load(open('./data/data_hiring_decisions.json'))['test']
+                            step_3_out = f"{full_path}/{GENERAL_CONFIGS['step_3_out']}_{sanitize(taskqa_model)}_simqg_{sanitize(simqg_model)}_simqa_{sanitize(simqa_model)}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
+                            orig_inputs = json.load(open(DATA_FILE))['test']
                             orig_tm_preds = pkl.load(open(step_1_out, 'rb'))
                             sim_inputs_list = pkl.load(open(step_2_out, 'rb'))
                             run_task_save_results(task_function=simulate_qa_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_3_out,
@@ -100,7 +103,7 @@ def main():
                 for simqg_model in MODEL_CONFIGS['simqg_model']:
                     for explanation in ['withexpl']:
                         for top_p in [1.0]:
-                            step_4_out = f'{full_path}/{GENERAL_CONFIGS['step_4_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model}_taskqa_{taskqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
+                            step_4_out = f"{full_path}/{GENERAL_CONFIGS['step_4_out']}_{sanitize(taskqa_model)}_simqg_{sanitize(simqg_model)}_taskqa_{sanitize(taskqa_model)}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
                             sim_inputs_list = pkl.load(open(step_2_out, 'rb'))
                             run_task_save_results(task_function=task_qa_hiring_decisions_sim_inputs_list, ex_idxs=EX_IDXS, out_file=step_4_out,
                                                     model=taskqa_model, expl_type=taskqa_expl_type, sim_inputs_list=sim_inputs_list)

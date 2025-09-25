@@ -2,6 +2,7 @@ import json
 import sys
 sys.path.append('..')
 from prompts.load_prompt import get_prompts_by_task
+from configs import DATASET, DOMAIN
 from copy import deepcopy
 import random
 import openai
@@ -16,9 +17,9 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 	num_examples = len(orig_inputs)
 	labels_num = num_samples/2
 	labels = ['YES', 'NO']*math.ceil(labels_num)
-	prompts = get_prompts_by_task(f'almanacs-hiring-decisions-simqg-{with_context}-label-balanced',
-								  [{'yes_no_label': labels[i],'orig_qn': orig_input['question'],'orig_qa_tm_expl': orig_tm_pred['pred_expl']}
-									for i, (orig_input, orig_tm_pred) in enumerate(zip(orig_inputs, orig_tm_preds))])
+	prompts = get_prompts_by_task(f'{DATASET}-{DOMAIN}-simqg-{with_context}-label-balanced',
+									[{'yes_no_label': labels[i],'orig_qn': orig_input['question'],'orig_qa_tm_expl': orig_tm_pred['pred_expl']}
+									 for i, (orig_input, orig_tm_pred) in enumerate(zip(orig_inputs, orig_tm_preds))])
 
 	# repeat the prompts for self.num_samples times
 	expanded = []
