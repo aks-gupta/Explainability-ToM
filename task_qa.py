@@ -20,7 +20,11 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
     distinct_inputs = [{'question': question} for question in distinct_qns]
     prompts = get_prompts_by_task(f'almanacs-hiring-decisions-taskqa-{expl_type}',
                                   [{'question': input['question']} for input in distinct_inputs])
-    pred_expls = call_openai_api(model=model, prompts=prompts,
+    if ('gpt' in model):
+        pred_expls = call_openai_api(model=model, prompts=prompts,
+                                temperature=0, max_tokens=200, stop='\n\n')
+    elif ('llama' in model):
+        pred_expls = call_together_api(model=model, prompts=prompts,
                                 temperature=0, max_tokens=200, stop='\n\n')
     assert len(pred_expls) == len(prompts)
     if expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:

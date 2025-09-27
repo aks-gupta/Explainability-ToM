@@ -67,7 +67,12 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 
 	# deduplicate the prompts before calling the API to save time
 	deduplicated_prompts = list(set(prompts))
-	pred_expls = call_openai_api(model=model, prompts=deduplicated_prompts,
+	if ('gpt' in model):
+		pred_expls = call_openai_api(model=model, prompts=deduplicated_prompts,
+								bsz=16, num_processes=8,
+								temperature=0, max_tokens=200, stop='\n')
+	elif ('llama' in model):
+		pred_expls = call_together_api(model=model, prompts=deduplicated_prompts,
 								bsz=16, num_processes=8,
 								temperature=0, max_tokens=200, stop='\n')
 	assert len(pred_expls) == len(deduplicated_prompts)

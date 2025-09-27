@@ -39,8 +39,10 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 			i+=1
 	prompts = expanded
 
-	responses = call_openai_api(model=model, prompts=prompts, temperature=1, top_p=top_p, stop='\n\n')
-
+	if ('gpt' in model):
+		responses = call_openai_api(model=model, prompts=prompts, temperature=1, top_p=top_p, stop='\n\n')
+	elif ('llama' in model):
+		responses = call_together_api(model=model, prompts=prompts, temperature=1, top_p=top_p, stop='\n\n')
 	sim_inputs = []
 	for response in responses:
 		lines = response.split("\n")
