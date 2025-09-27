@@ -3,10 +3,8 @@ import os
 def list_files_in_folder(folder_path):
     try:
         files = os.listdir(folder_path)
-        print(f"Files in '{folder_path}':")
         max_version = 0
         for file_name in files:
-            print(file_name)
             version = int(file_name[1:])
             max_version = max(version, max_version)
         return max_version

@@ -100,7 +100,7 @@ def main():
                 for simqg_model in MODEL_CONFIGS['simqg_model']:
                     for explanation in ['withexpl']:
                         for top_p in [1.0]:
-                            step_4_out = f'{full_path}/{GENERAL_CONFIGS['step_4_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model}_taskqa_{taskqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
+                            step_4_out = f'{full_path}/{GENERAL_CONFIGS['step_4_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model}_taskqa_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
                             sim_inputs_list = pkl.load(open(step_2_out, 'rb'))
                             run_task_save_results(task_function=task_qa_hiring_decisions_sim_inputs_list, ex_idxs=EX_IDXS, out_file=step_4_out,
                                                     model=taskqa_model, expl_type=taskqa_expl_type, sim_inputs_list=sim_inputs_list)
