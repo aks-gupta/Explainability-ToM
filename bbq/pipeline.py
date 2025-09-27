@@ -50,6 +50,7 @@ if __name__ == '__main__':
 	context = config.WITH_CONTEXT # context while generating counterfactuals
 	explanation = config.EXPLANATION # explanation used in simqa by simulator model
 	balanced = config.BALANCED # balanced sampling in simqg
+	generate_fixed = config.GENERATE_FIXED # generate and store fixed counterfactuals
 
 	'''implement stratified sampling in simqa'''
 	# stratified = config.STRATIFIED # stratified sampling in simqa
@@ -73,7 +74,7 @@ if __name__ == '__main__':
 
 	# Task QA processing
 	for taskqa_model in taskqa_models:
-		test_inputs = json.load(open('data_bbq.json'))[DOMAIN]
+		test_inputs = json.load(open(config.DATA_FILE))[DOMAIN]
 		for taskqa_expl_type in expl_types:
 			out_file = f'{PATH}taskqa_{taskqa_model}_{taskqa_expl_type}_{DOMAIN}_{NUM_EX}.pkl'
 			run_task_save_results(task_function=task_qa, out_file=out_file, ex_idxs=EX_IDXS,

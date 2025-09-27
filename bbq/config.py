@@ -1,11 +1,17 @@
 DOMAIN = 'raceXGender'
 NUM_EX = 1
+PROMPT_FILE = 'prompts_bbq_raceXGender.json'
+DATA_FILE = 'data_bbq.json'
 EX_IDXS = range(0, NUM_EX)
-NUM_CF = 5
-BALANCED = True
+NUM_CF = 1
+
+BALANCED = False
 MIXED = False
 WITH_CONTEXT = True
 EXPLANATION = True
+
+GENERATE_FIXED_CFS = False
+NUM_FIXED_CFS = 3
 '''implement stratified sampling in simqa'''
 # STRATIFIED = False
 # STRAT_SAMPLES_PER_OPTION = 1

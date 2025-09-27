@@ -6,30 +6,8 @@ import openai
 import time
 import os
 import config
-
-client = openai.OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-    base_url="https://cmu.litellm.ai",
-)
-
-def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p=1.0, max_tokens=200, stop=None):
-    responses = []
-    for i, prompt in enumerate(prompts):
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                top_p=top_p,
-                max_tokens=max_tokens,
-                stop=stop
-            )
-            responses.append(response.choices[0].message.content)
-        except Exception as e:
-            print(f"[{i}] Error during call:\nPrompt: {prompt[:100]}...\nError: {e}")
-            responses.append("")
-            time.sleep(1)
-    return responses
+from api_call import call_openai_api
+from api_call import call_together_api
 
 def simulate_qa(model, orig_inputs, orig_tm_preds, sim_inputs_list, domain):
     """

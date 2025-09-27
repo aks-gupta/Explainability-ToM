@@ -59,9 +59,9 @@ def calculate_precision(domain, num_ex, taskqa_models, simqg_model, simqa_model,
 	print(settings)
 	for setting in settings:
 		print(' '.join(setting), round(np.mean(setting2scores[setting]) * 100, 1))
-	for setting1 in settings:
-		pvalues = [str(ttest_rel(setting2scores[setting1], setting2scores[setting2])[1]) for setting2 in settings]
-		print(','.join(pvalues))
+	# for setting1 in settings:
+	# 	pvalues = [str(ttest_rel(setting2scores[setting1], setting2scores[setting2])[1]) for setting2 in settings]
+	# 	print(','.join(pvalues))
 
 def calculate_precision_fixed(domain, num_ex, taskqa_models, simqa_model, path):
 	DOMAIN = domain
@@ -114,6 +114,6 @@ def calculate_precision_fixed(domain, num_ex, taskqa_models, simqa_model, path):
 	print(settings)
 	for setting in settings:
 		print(' '.join(setting), round(np.mean(setting2scores[setting]) * 100, 1))
-	for setting1 in settings:
-		pvalues = [str(ttest_rel(setting2scores[setting1], setting2scores[setting2])[1]) for setting2 in settings]
-		print(','.join(pvalues))
+	# for setting1 in settings:
+	# 	pvalues = [str(ttest_rel(setting2scores[setting1], setting2scores[setting2])[1]) for setting2 in settings]
+	# 	print(','.join(pvalues))

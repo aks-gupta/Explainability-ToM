@@ -7,29 +7,8 @@ import openai
 import time
 import os
 import re
-
-client = openai.OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-    base_url="https://cmu.litellm.ai",
-)
-
-def call_openai_api(model, prompts, temperature=0, max_tokens=200, stop=None):
-    responses = []
-    for prompt in prompts:
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                max_tokens=max_tokens,
-                stop=stop,
-            )
-            responses.append(response.choices[0].message.content)
-        except Exception as e:
-            print(f"Error calling OpenAI API: {e}")
-            responses.append("")
-            time.sleep(1)
-    return responses
+from api_call import call_openai_api
+from api_call import call_together_api
 
 def task_qa(model, expl_type, inputs, domain):
     print(f"\n\033[1mRunning TaskQA\033[0m with model={model}, expl_type={expl_type}, domain={domain} on {len(inputs)} inputs.")
@@ -45,8 +24,8 @@ def task_qa(model, expl_type, inputs, domain):
     print(f"TASKQA: Total {len(prompts)} prompts, {len(deduplicated_prompts)} unique prompts.")
     
     # Test API connection
-    # resp = call_openai_api("gpt-4o-mini", ["Say Testing OpenAI API Connection!"])
-    # print(resp)
+    resp = call_together_api("meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", ["Say Testing Together AI API Connection!"])
+    print(resp)
 
     responses = call_openai_api(model=model, prompts=deduplicated_prompts,
                                 temperature=0, max_tokens=200, stop='\n\n')
