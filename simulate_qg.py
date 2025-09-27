@@ -10,22 +10,32 @@ import time
 import os
 import math 
 from api_client import call_together_api, call_openai_api
+from configs import GENERAL_CONFIGS
+
+counterfactual_generation = GENERAL_CONFIGS['counterfactuals']
 
 def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context):
 	assert len(orig_inputs) == len(orig_tm_preds)
 	num_examples = len(orig_inputs)
 	labels_num = num_samples/2
 	labels = ['YES', 'NO']*math.ceil(labels_num)
-	prompts = get_prompts_by_task(f'almanacs-hiring-decisions-simqg-{with_context}-label-balanced',
+	if counterfactual_generation=='LABEL_BALANCED':
+		prompts = get_prompts_by_task(f'almanacs-hiring-decisions-simqg-{with_context}-label-balanced',
 								  [{'orig_qn': orig_input['question'],'orig_qa_tm_expl': orig_tm_pred['pred_expl']}
 									for i, (orig_input, orig_tm_pred) in enumerate(zip(orig_inputs, orig_tm_preds))])
-
+	else:
+		prompts = get_prompts_by_task(f'almanacs-hiring-decisions-simqg-{with_context}',
+								  [{'orig_qn': orig_input['question'],'orig_qa_tm_expl': orig_tm_pred['pred_expl']}
+									for i, (orig_input, orig_tm_pred) in enumerate(zip(orig_inputs, orig_tm_preds))])
 	# repeat the prompts for self.num_samples times
 	expanded = []
 	for prompt in prompts:
 		i = 0 
 		for _ in range(num_samples):
-			expanded.append(prompt.format(labels[i]))
+			if counterfactual_generation=='LABEL_BALANCED':
+				expanded.append(prompt.format(labels[i]))
+			else:
+				expanded.append(prompt)
 			i+=1
 	prompts = expanded
 
