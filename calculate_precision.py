@@ -5,7 +5,7 @@ import numpy as np
 import pickle as pkl
 from scipy.stats import ttest_ind, ttest_rel
 import os 
-from configs import GENERAL_CONFIGS, MODEL_CONFIGS
+from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DOMAIN
 from utilities import return_last_max_version
 
 print(os.getcwd())
@@ -33,7 +33,7 @@ if __name__ == '__main__':
 				setting = (taskqa_model, taskqa_expl_type)
 				setting2exidx2precision[setting] = {}
 
-				step_3_out = f'{full_path}/{GENERAL_CONFIGS['step_3_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model}_simqa_{simqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
+				step_3_out = f'{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_3_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model}_simqa_{simqa_model}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
 				print(step_3_out)
 				exidx2qns_simans = pkl.load(
 					open(step_3_out, 'rb'))
@@ -50,7 +50,7 @@ if __name__ == '__main__':
 				if GENERAL_CONFIGS['counterfactuals']=="LABEL_BALANCED":
 					step_4_out = f'data/label_balanced_counterfactuals_answers.pkl'
 				else:
-					step_4_out = f'{full_path}/{GENERAL_CONFIGS['step_4_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model}_taskqa_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
+					step_4_out = f'{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_4_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model}_taskqa_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
 				print(step_4_out)
 
 				exidx2qns_taskans = pkl.load(

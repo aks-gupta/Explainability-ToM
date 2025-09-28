@@ -25,7 +25,7 @@ def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p
             responses.append(response.choices[0].message.content)
         except Exception as e:
             print(f"[{i}] Error during call:\nPrompt: {prompt[:100]}...\nError: {e}")
-            responses.append("")
+            responses.append("Error: Unable to generate response")
             time.sleep(1)
     return responses
 
@@ -46,6 +46,6 @@ def call_together_api(model, prompts, bsz=1, num_processes=1, temperature=0, top
             responses.append(response.choices[0].message.content)
         except Exception as e:
             print(f"[{i}] Error during call:\nPrompt: {prompt[:100]}...\nError: {e}")
-            responses.append("")
+            responses.append("Error: Unable to generate response")
             time.sleep(1)
     return responses

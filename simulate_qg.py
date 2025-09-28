@@ -10,7 +10,7 @@ import time
 import os
 import math 
 from api_client import call_together_api, call_openai_api
-from configs import GENERAL_CONFIGS
+from configs import GENERAL_CONFIGS, DATASET, DOMAIN, DATA_FILE
 
 counterfactual_generation = GENERAL_CONFIGS['counterfactuals']
 
@@ -20,11 +20,11 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 	labels_num = num_samples/2
 	labels = ['YES', 'NO']*math.ceil(labels_num)
 	if counterfactual_generation=='LABEL_BALANCED':
-		prompts = get_prompts_by_task(f'almanacs-hiring-decisions-simqg-{with_context}-label-balanced',
+		prompts = get_prompts_by_task(f'{DATASET}-{DOMAIN}-simqg-{with_context}-label-balanced',
 								  [{'orig_qn': orig_input['question'],'orig_qa_tm_expl': orig_tm_pred['pred_expl']}
 									for i, (orig_input, orig_tm_pred) in enumerate(zip(orig_inputs, orig_tm_preds))])
 	else:
-		prompts = get_prompts_by_task(f'almanacs-hiring-decisions-simqg-{with_context}',
+		prompts = get_prompts_by_task(f'{DATASET}-{DOMAIN}-simqg-{with_context}',
 								  [{'orig_qn': orig_input['question'],'orig_qa_tm_expl': orig_tm_pred['pred_expl']}
 									for i, (orig_input, orig_tm_pred) in enumerate(zip(orig_inputs, orig_tm_preds))])
 	# repeat the prompts for self.num_samples times
@@ -38,19 +38,26 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 				expanded.append(prompt)
 			i+=1
 	prompts = expanded
+	print(prompts)
 
 	if ('gpt' in model):
 		responses = call_openai_api(model=model, prompts=prompts, temperature=1, top_p=top_p, stop='\n\n')
 	elif ('llama' in model):
 		responses = call_together_api(model=model, prompts=prompts, temperature=1, top_p=top_p, stop='\n\n')
+	
+	print(f"DEBUG SimQG: Received {len(responses)} responses")
 	sim_inputs = []
-	for response in responses:
+	for i, response in enumerate(responses):
+		print(f"DEBUG SimQG Response {i}: {response}")
 		lines = response.split("\n")
 		sim_input = lines[0].strip()
 		if sim_input is not None:
-			sim_inputs.append(sim_input.replace("Follow-up Question: ", ""))
+			cleaned_input = sim_input.replace("Follow-up Question: ", "")
+			sim_inputs.append(cleaned_input)
+			print(f"DEBUG SimQG: Cleaned input {i}: {cleaned_input}")
 		else:
 			sim_inputs.append(sim_input)
+			print(f"DEBUG SimQG: Input {i} is None")
 
 	final_inputs = []
 	count = 0

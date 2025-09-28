@@ -7,10 +7,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 from prompts.load_prompt import get_prompts_by_task
 from openai import OpenAI
 import time
+from configs import DATASET, DOMAIN, DATA_FILE
 
 def task_qa_hiring_decisions(model, expl_type, inputs):
-    print(model)
-    print(expl_type)
+    # print(model)
+    # print(expl_type)
     distinct_qns = []
     for input in inputs:
         if 'question' in input:
@@ -18,7 +19,7 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
         else:
             distinct_qns.append(input)
     distinct_inputs = [{'question': question} for question in distinct_qns]
-    prompts = get_prompts_by_task(f'almanacs-hiring-decisions-taskqa-{expl_type}',
+    prompts = get_prompts_by_task(f'{DATASET}-{DOMAIN}-taskqa-{expl_type}',
                                   [{'question': input['question']} for input in distinct_inputs])
     if ('gpt' in model):
         pred_expls = call_openai_api(model=model, prompts=prompts,
@@ -29,13 +30,17 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
     assert len(pred_expls) == len(prompts)
     if expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
         pred_answers = []
-        for pred_expl in pred_expls:
+        for i, pred_expl in enumerate(pred_expls):
+            # print(f"DEBUG TaskQA Response {i}: {pred_expl}")
             if pred_expl.endswith('So the answer is no.'):
                 pred_answers.append('no')
+                # print(f"DEBUG TaskQA: Extracted 'no' from response {i}")
             elif pred_expl.endswith('So the answer is yes.'):
                 pred_answers.append('yes')
+                # print(f"DEBUG TaskQA: Extracted 'yes' from response {i}")
             else:
                 pred_answers.append('neither')
+                # print(f"DEBUG TaskQA: Extracted 'neither' from response {i} (no clear ending)")
         preds = [{'pred_ans': pred_ans, 'pred_expl': pred_expl.strip()} for pred_ans, pred_expl in
                  zip(pred_answers, pred_expls)]
     else:
@@ -54,7 +59,7 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
 def task_qa_hiring_decisions_sim_inputs_list(model, expl_type, sim_inputs_list):
     all_sim_inputs = [input for sim_inputs in sim_inputs_list for input in sim_inputs['questions']]
     preds = task_qa_hiring_decisions(model, expl_type, all_sim_inputs)
-    print(type(preds), len(preds))
+    # print(type(preds), len(preds))
     # regroup preds according to examples (multiple simulation inputs for each original input)
     example_preds = []
     num_samples = len(sim_inputs_list)

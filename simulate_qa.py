@@ -3,7 +3,7 @@ import sys
 sys.path.append('..')
 from prompts.load_prompt import get_prompts_by_task
 from api_client import call_together_api, call_openai_api
-from configs import GENERAL_CONFIGS
+from configs import GENERAL_CONFIGS, DATASET, DOMAIN, DATA_FILE
 from openai import OpenAI
 import openai
 import time
@@ -11,13 +11,16 @@ import re
 import os
 
 def extract_sim_qa_ans(sim_qa_expl):
-	print(sim_qa_expl)
+	print(f"DEBUG SimQA: Processing response: {sim_qa_expl}")
 	cannot_guess = 'I cannot guess' in sim_qa_expl
 	pattern_no = r'("?)(?:\bno\b)(?=[\s.,!?;:]|$)\1'
 	pattern_yes = r'("?)(?:\byes\b)(?=[\s.,!?;:]|$)\1'
 
 	guess_yes = bool(re.search(pattern_yes, sim_qa_expl, flags=re.IGNORECASE))
 	guess_no = bool(re.search(pattern_no, sim_qa_expl, flags=re.IGNORECASE))
+	
+	print(f"DEBUG SimQA: cannot_guess={cannot_guess}, guess_yes={guess_yes}, guess_no={guess_no}")
+	
 	if not (cannot_guess + guess_yes + guess_no == 1):
 		return 'neither'
 	elif cannot_guess:
@@ -38,7 +41,7 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 	
 	if include_expl:
 		prompts = get_prompts_by_task(
-			'almanacs-hiring-decisions-simqa-withexpl',
+			f'{DATASET}-{DOMAIN}-simqa-withexpl',
 			[
 				{
 					'orig_qn': orig_input['question'],
@@ -52,7 +55,7 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 		)
 	else:
 		prompts = get_prompts_by_task(
-			'almanacs-hiring-decisions-simqa-withoutexpl',
+			f'{DATASET}-{DOMAIN}-simqa-withoutexpl',
 			[
 				{
 					'orig_qn': orig_input['question'],
@@ -83,8 +86,12 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 
 	# extract answers
 	preds = []
-	for pred_expl in pred_expls:
-		preds.append({'pred_ans': extract_sim_qa_ans(pred_expl), 'pred_expl': pred_expl})
+	print(f"DEBUG SimQA: Processing {len(pred_expls)} responses")
+	for i, pred_expl in enumerate(pred_expls):
+		print(f"DEBUG SimQA: Processing response {i}: {pred_expl}")
+		extracted_ans = extract_sim_qa_ans(pred_expl)
+		preds.append({'pred_ans': extracted_ans, 'pred_expl': pred_expl})
+		print(f"DEBUG SimQA: Final answer for response {i}: {extracted_ans}")
 
 	# regroup preds according to examples (multiple simulation questions correspond to each original question)
 	assert len(preds) == len(prompts)
