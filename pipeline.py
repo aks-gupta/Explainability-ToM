@@ -57,7 +57,7 @@ def main():
 
     # SimQG
     if counterfactual_code_generation=='HARDCODED':
-        step_2_out = f'data/fixed_counterfactuals.pkl'
+        step_2_out = f'data/hardcoded_counterfactuals.pkl'
     elif counterfactual_code_generation=='LABEL_BALANCED':
         step_2_out = f'data/label_balanced_counterfactuals.pkl'
     else:
