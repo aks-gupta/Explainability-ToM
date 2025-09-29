@@ -82,12 +82,10 @@ def main():
     print("STEP 2: SimQG - Counterfactual Question Generation")
     print("="*60)
     if counterfactual_code_generation=='HARDCODED':
-<<<<<<< HEAD
+        print("Using fixed counterfactuals")
         step_2_out = f'data/fixed_counterfactuals.pkl'
         print("Using hardcoded counterfactuals")
-=======
         step_2_out = f'data/hardcoded_counterfactuals.pkl'
->>>>>>> be4c1f902ad4f91038b9c77de8c650856b4dce60
     elif counterfactual_code_generation=='LABEL_BALANCED':
         step_2_out = f'data/label_balanced_counterfactuals.pkl'
         print("Using label balanced counterfactuals")
