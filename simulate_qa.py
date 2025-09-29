@@ -19,8 +19,6 @@ def extract_sim_qa_ans(sim_qa_expl):
 	guess_yes = bool(re.search(pattern_yes, sim_qa_expl, flags=re.IGNORECASE))
 	guess_no = bool(re.search(pattern_no, sim_qa_expl, flags=re.IGNORECASE))
 	
-	print(f"DEBUG SimQA: cannot_guess={cannot_guess}, guess_yes={guess_yes}, guess_no={guess_no}")
-	
 	if not (cannot_guess + guess_yes + guess_no == 1):
 		return 'neither'
 	elif cannot_guess:
@@ -70,7 +68,7 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 
 	# deduplicate the prompts before calling the API to save time
 	deduplicated_prompts = list(set(prompts))
-	if ('gpt' in model):
+	if ('o1-mini' in model) or ('gpt-4.1-mini' in model):
 		pred_expls = call_openai_api(model=model, prompts=deduplicated_prompts,
 								bsz=16, num_processes=8,
 								temperature=0, max_tokens=200, stop='\n')
@@ -86,12 +84,12 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 
 	# extract answers
 	preds = []
-	print(f"DEBUG SimQA: Processing {len(pred_expls)} responses")
+	# print(f"DEBUG SimQA: Processing {len(pred_expls)} responses")
 	for i, pred_expl in enumerate(pred_expls):
-		print(f"DEBUG SimQA: Processing response {i}: {pred_expl}")
+		# print(f"DEBUG SimQA: Processing response {i}: {pred_expl}")
 		extracted_ans = extract_sim_qa_ans(pred_expl)
 		preds.append({'pred_ans': extracted_ans, 'pred_expl': pred_expl})
-		print(f"DEBUG SimQA: Final answer for response {i}: {extracted_ans}")
+		# print(f"DEBUG SimQA: Final answer for response {i}: {extracted_ans}")
 
 	# regroup preds according to examples (multiple simulation questions correspond to each original question)
 	assert len(preds) == len(prompts)

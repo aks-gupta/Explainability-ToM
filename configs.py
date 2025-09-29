@@ -11,10 +11,10 @@ GENERAL_CONFIGS = {
 }
 
 MODEL_CONFIGS = {
-    'taskqa_model': ['gpt-4o-mini'], #['meta-llama/Llama-3.3-70B-Instruct-Turbo-Free', 'gpt-4o-mini'],
+    'taskqa_model': ['gpt-4.1-mini'], #['meta-llama/Llama-3.3-70B-Instruct-Turbo-Free', 'gpt-4o-mini','o1-mini-2024-09-12'],
     'taskqa_expl_type': ['cot'], #'concise', 'detailed', 'toxic', 'nontoxic'
-    'simqg_model': ['gpt-4o-mini'],
-    'simqa_model': ['gpt-4o-mini']
+    'simqg_model': ['gpt-4.1-mini'], #['o1-mini-2024-09-12'],
+    'simqa_model': ['gpt-4.1-mini'] #['o1-mini-2024-09-12']
 }
 
 # Dataset and domain settings

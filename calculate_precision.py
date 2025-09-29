@@ -5,7 +5,7 @@ import numpy as np
 import pickle as pkl
 from scipy.stats import ttest_ind, ttest_rel
 import os 
-from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DOMAIN
+from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DOMAIN, MODEL_CONFIGS
 from utilities import return_last_max_version
 
 print(os.getcwd())
@@ -16,9 +16,9 @@ if __name__ == '__main__':
 	if GENERAL_CONFIGS['counterfactuals']=='HARDCODED':
 		num_counterfactual_qs = 1
 	EX_IDXS = range(0, num_examples*num_counterfactual_qs)
-	simqg_model = 'gpt-4o-mini'
+	simqg_model = MODEL_CONFIGS['simqg_model'][0]
 	top_p = 1.0
-	simqa_model = 'gpt-4o-mini'
+	simqa_model = MODEL_CONFIGS['simqa_model'][0]
 	with_context = True
 	full_path = return_last_max_version()
 	print(full_path)

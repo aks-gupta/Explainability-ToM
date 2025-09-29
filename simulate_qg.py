@@ -38,9 +38,9 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 				expanded.append(prompt)
 			i+=1
 	prompts = expanded
-	print(prompts)
+	# print(prompts)
 
-	if ('gpt' in model):
+	if ('o1-mini' in model) or ('gpt-4.1-mini' in model):
 		responses = call_openai_api(model=model, prompts=prompts, temperature=1, top_p=top_p, stop='\n\n')
 	elif ('llama' in model):
 		responses = call_together_api(model=model, prompts=prompts, temperature=1, top_p=top_p, stop='\n\n')
@@ -50,14 +50,25 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 	for i, response in enumerate(responses):
 		print(f"DEBUG SimQG Response {i}: {response}")
 		lines = response.split("\n")
-		sim_input = lines[0].strip()
+		sim_input = None
+		if 'o1-mini' in model or 'gpt-4.1-mini' in model:
+			start_marker = 'Follow-up Question:'
+			end_marker = "Your guess of Robot's Answer to the Follow-up Question:"
+			start_idx = response.find(start_marker)
+			if start_idx != -1:
+				segment = response[start_idx + len(start_marker):]
+				end_idx = segment.find(end_marker)
+				if end_idx != -1:
+					segment = segment[:end_idx]
+				sim_input = segment.strip()
+		else:
+			sim_input = lines[0].strip()
+		print(f"DEBUG SimQG: Simulated input {i}: {sim_input}")
 		if sim_input is not None:
 			cleaned_input = sim_input.replace("Follow-up Question: ", "")
 			sim_inputs.append(cleaned_input)
-			print(f"DEBUG SimQG: Cleaned input {i}: {cleaned_input}")
 		else:
 			sim_inputs.append(sim_input)
-			print(f"DEBUG SimQG: Input {i} is None")
 
 	final_inputs = []
 	count = 0

@@ -7,7 +7,8 @@ import json
 
 client_openai = openai.OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
-    base_url="https://cmu.litellm.ai",
+    # base_url="https://cmu.litellm.ai",
+    base_url="https://ai-gateway.andrew.cmu.edu/",
 )
 
 def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p=1.0, max_tokens=200, stop=None):
@@ -19,9 +20,9 @@ def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p
                 messages=[{"role": "user", "content": prompt}],
                 temperature=temperature,
                 top_p=top_p,
-                max_tokens=max_tokens,
-                stop=stop
+                # max_tokens=max_tokens,
             )
+            # print(f"DEBUG OpenAI Response {i}: {response.choices[0].message}")
             responses.append(response.choices[0].message.content)
         except Exception as e:
             print(f"[{i}] Error during call:\nPrompt: {prompt[:100]}...\nError: {e}")

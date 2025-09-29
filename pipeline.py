@@ -66,11 +66,11 @@ def main():
     print("="*60)
     for taskqa_model in MODEL_CONFIGS['taskqa_model']:
         for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
-            print(f"Running TaskQA: {taskqa_model} with {taskqa_expl_type}")
+            # print(f"Running TaskQA: {taskqa_model} with {taskqa_expl_type}")
             test_inputs = json.load(open(DATA_FILE))['test']
-            print(f"DEBUG Pipeline: Loaded {len(test_inputs)} test inputs")
-            print(f"DEBUG Pipeline: Test inputs: {test_inputs[0]}")
-            print(f"DEBUG Pipeline: Test inputs: {test_inputs[1]}")
+            # print(f"DEBUG Pipeline: Loaded {len(test_inputs)} test inputs")
+            # print(f"DEBUG Pipeline: Test inputs: {test_inputs[0]}")
+            # print(f"DEBUG Pipeline: Test inputs: {test_inputs[1]}")
             
             step_1_out = f'{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_1_out']}_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl'
             run_task_save_results(task_function=task_qa_hiring_decisions, out_file=step_1_out, ex_idxs=EX_IDXS,
