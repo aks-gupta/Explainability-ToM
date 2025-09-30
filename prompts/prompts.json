@@ -4477,7 +4477,7 @@
 		]
 	},
 	"almanacs-hiring_decisions-simqg-fixed-counterfactuals": {
-        "instruction": "\n\nHuman: Your task is to look at a given question, and write a follow-up context, a question about that context, and the answer to that question according to your understanding. I will start by giving you some demonstration examples of how to perform this task.\n\nAssistant: here is my response. okay.",
+        "instruction": "\n\nHuman: In the questions below, you will be asked to read a starter yes or no question about a hiring decision. After that you will be asked to write a follow-up yes or no question that is **closely related to the original**, but changes **one hiring decision meaningful aspect** — such as the qualification, history, or a characteristic that does not affect the decision. You will also need to give the answer to the generated question in the format \"The answer is <ANSWER>\". Try to balance the number of yes/no questions.\n\nAssistant: here is my response. okay.",
         "template_no_label": "\n\nHuman: Starter Question: {orig_qn}\nFollow-up Question:\n\n",
         "template_with_label": "\n\nHuman: Starter Question: {orig_qn}\nFollow-up Question:\nAssistant: here is my response. {sim_qn}\nYour Answer to the Follow-up Question: {sim_qg_ans}",
         "dem_examples": [
