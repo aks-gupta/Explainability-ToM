@@ -16,10 +16,10 @@ with_context = False
 simqg_model = configs.MODEL_CONFIGS['simqg_model']
 
 def get_data():
-	# data = json.load(open(f'./data/data_{domain}.json'))['test']
-	data = json.load(open(configs.DATA_FILE))
-	combined_data = data['test'] + data['train']
-	return combined_data
+	data = json.load(open(f'./data/data_{domain}.json'))['test']
+	# data = json.load(open(configs.DATA_FILE))
+	# combined_data = data['test'] + data['train']
+	return data
 
 def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context):
 
@@ -67,11 +67,12 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 			continue
 			
 		if model in ['o1-mini-2024-09-12', 'gpt-4.1-mini']:
-			response = response.replace("Here is my response.", "").strip()
+			response = response.replace("Here is my response.", "")
 			answer_marker = "Your Answer to the Follow-up Question:"
 			if answer_marker in response:
 				parts = response.split(answer_marker)
 				sim_input = parts[0].strip()
+				sim_input = sim_input.replace("Follow-up Question:", "").strip()
 				sim_answer = parts[1].strip() if len(parts) > 1 else None
 				if sim_answer:
 					sim_answer = sim_answer.replace("The answer is", "").strip()
@@ -83,12 +84,18 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 							sim_answer = "no"
 						else:
 							sim_answer = None
-			elif "\n\nThe answer is yes." in response:
-				sim_input = response.split("\n\nThe answer is yes.")[0].strip()
-				sim_answer = "yes"
-			elif "\n\nThe answer is no." in response:
-				sim_input = response.split("\n\nThe answer is no.")[0].strip()
-				sim_answer = "no"
+			elif "\n\nThe answer is yes." in response or "\nThe answer is yes." in response:
+				for separator in ["\n\nThe answer is yes.", "\nThe answer is yes."]:
+					if separator in response:
+						sim_input = response.split(separator)[0].strip()
+						sim_answer = "yes"
+						break
+			elif "\n\nThe answer is no." in response or "\nThe answer is no." in response:
+				for separator in ["\n\nThe answer is no.", "\nThe answer is no."]:
+					if separator in response:
+						sim_input = response.split(separator)[0].strip()
+						sim_answer = "no"
+						break
 			else:
 				sim_input = response.strip()
 				sim_answer = None

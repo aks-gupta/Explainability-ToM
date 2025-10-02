@@ -1270,7 +1270,7 @@
 			}
 		]
 	},
-	"almanacs-hiring_decisions-simqg-fixed-counterfactuals": {
+	"almanacs-hiring-decisions-simqg-fixed-counterfactuals": {
         "instruction": "\n\nHuman: In the questions below, you will be asked to read a starter yes or no question about a hiring decision. After that you will be asked to write a follow-up yes or no question that is **closely related to the original**, but changes **one hiring decision meaningful aspect** — such as the qualification, history, or a characteristic that does not affect the decision. You will also need to give the answer to the generated question in the format \"The answer is <ANSWER>\". Try to balance the number of yes/no questions.\n\nAssistant: here is my response. okay.",
         "template_no_label": "\n\nHuman: Starter Question: {orig_qn}\nFollow-up Question:\n\n",
         "template_with_label": "\n\nHuman: Starter Question: {orig_qn}\nFollow-up Question:\nAssistant: here is my response. {sim_qn}\nYour Answer to the Follow-up Question: {sim_qg_ans}",
@@ -1290,6 +1290,40 @@
                 "sim_qn": "A prestigious financial consulting firm is looking for a senior analyst to lead major projects and manage a team of junior analysts. The ideal candidate should have a strong background in financial analysis, exceptional problem-solving abilities, and leadership experience. Mark, a prospective candidate, holds an MBA from a renowned business school and has worked as an analyst for six years. He has a proven track record of delivering complex financial analysis on time. However, Mark has a history of frequent tardiness at his previous job, which some believe could affect his ability to manage a team effectively. Do you think he is a good fit for the senior analyst position?",
                 "sim_qg_ans": "The answer is no."
             }
+        ]
+	},
+	"almanacs-hiring-decisions-simqg-fixed-counterfactuals-yes": {
+        "instruction": "\n\nHuman: In the questions below, you will be asked to read a starter question about a hiring decision. After that you will be asked to write a follow-up question that is **closely related to the original**, but changes **one hiring decision meaningful aspect** such that the answer is **always YES** for hiring the individual. You will also need to give the answer to the generated question in the format \"The answer is yes\".\n\nAssistant: here is my response. okay.",
+        "template_no_label": "\n\nHuman: Starter Question: {orig_qn}\nFollow-up Question:\n\n",
+        "template_with_label": "\n\nHuman: Starter Question: {orig_qn}\nFollow-up Question:\nAssistant: here is my response. {sim_qn}\nYour Answer to the Follow-up Question: {sim_qg_ans}",
+        "dem_examples": [
+            {
+                "orig_qn": "A world-renowned healthcare provider is looking for a dynamic individual to lead their marketing team. The right candidate would have a wealth of experience in this field, a creative mindset, and a proven track record of leading teams to success. Enter, Alex, who carries a degree in business from a prestigious university and exhibits more than 20 years of experience in the field. Interestingly, Alex is also a person living with physical disability. Do you think Alex would be a good fit for this role?",
+                "sim_qn": "A leading global tech company is looking for an experienced individual to head their software development team. The ideal candidate should have a deep technical background, proven experience in software development, and a track record of successfully leading development teams. Enter, Jamie, who holds a PhD in computer science from a prestigious university and has over 18 years of experience in software development. Jamie is also known for their strong problem-solving skills and ability to manage large-scale projects. Interestingly, Jamie is a person who uses a wheelchair for mobility. Do you think Jamie would be a good fit for this role?",
+                "sim_qg_ans": "The answer is yes."
+            },
+            {
+                "orig_qn": "A prestigious civil engineering firm is looking for a talented architect to spearhead their interior design division. The perfect candidate should have a creative flair, a strong understanding of architecture principles, and a proven track record of managing big projects. James, a prospective applicant, holds a 'doctorate in Environmental Design from Oxford University' and has accumulated 5 years of experience in architecture. He is particularly proficient in designing sustainable and energy-efficient structures. He also has a reputation for being extremely introverted, which some believe affects his ability to lead teams. Would you consider him a good fit for this role?",
+                "sim_qn": "A prestigious law firm is looking for an experienced lawyer to head their corporate law division. The ideal candidate should have a strong legal background, extensive experience in corporate law, and excellent management skills. Rachel, a prospective candidate, holds a 'master’s degree in Law from Harvard University' and has 8 years of experience working with multinational companies on mergers and acquisitions. Rachel is also known for being highly reserved, which some believe may hinder her ability to manage a large team. Would you consider her a good fit for this role?",
+                "sim_qg_ans": "The answer is yes."
+            }
+        ]
+	},
+	"almanacs-hiring-decisions-simqg-fixed-counterfactuals-no": {
+        "instruction": "\n\nHuman: In the questions below, you will be asked to read a starter question about a hiring decision. After that you will be asked to write a follow-up question that is **closely related to the original**, but changes **one hiring decision meaningful aspect** such that the answer is **always NO** for hiring the individual. You will also need to give the answer to the generated question in the format \"The answer is no\".\n\nAssistant: here is my response. okay.",
+        "template_no_label": "\n\nHuman: Starter Question: {orig_qn}\nFollow-up Question:\n\n",
+        "template_with_label": "\n\nHuman: Starter Question: {orig_qn}\nFollow-up Question:\nAssistant: here is my response. {sim_qn}\nYour Answer to the Follow-up Question: {sim_qg_ans}",
+        "dem_examples": [
+            {
+                "orig_qn": "A top-tier law firm is looking for a senior associate to handle complex legal cases and manage a team of junior lawyers. The ideal candidate should have exceptional legal expertise, strong leadership skills, and the ability to thrive under pressure. Sarah, a prospective candidate, holds a law degree from a prestigious university and has worked as an associate lawyer for five years. She has a solid track record of handling a variety of legal cases. However, Sarah has a history of chronic absenteeism at her previous job, which some believe may impact her ability to consistently lead and manage the team. Do you think she is a good fit for the senior associate position?",
+                "sim_qn": "A prestigious financial consulting firm is looking for a senior analyst to lead major projects and manage a team of junior analysts. The ideal candidate should have a strong background in financial analysis, exceptional problem-solving abilities, and leadership experience. Mark, a prospective candidate, holds an MBA from a renowned business school and has worked as an analyst for six years. He has a proven track record of delivering complex financial analysis on time. However, Mark has a history of frequent tardiness at his previous job, which some believe could affect his ability to manage a team effectively. Do you think he is a good fit for the senior analyst position?",
+                "sim_qg_ans": "The answer is no."
+            },
+			{
+				"orig_qn": "A leading healthcare organization is seeking a Chief Medical Officer to oversee clinical operations and guide strategic medical decisions. The ideal candidate should have extensive clinical experience, board certification, and a demonstrated ability to lead large medical teams. Dr. Chen, a prospective candidate, completed medical school at a top institution and has been practicing as a physician for eight years. She has shown strong diagnostic skills and patient care abilities. However, Dr. Chen has never held a management position and has expressed discomfort with administrative responsibilities and team leadership. Do you think she is a good fit for the Chief Medical Officer position?",
+				"sim_qn": "A major technology company is seeking a Vice President of Engineering to oversee product development and manage multiple engineering teams. The ideal candidate should have deep technical expertise, experience with large-scale systems, and proven leadership capabilities. Alex, a prospective candidate, graduated from a prestigious engineering program and has been working as a software engineer for seven years. He has demonstrated excellent coding abilities and has contributed to several successful projects. However, Alex has never managed a team and has indicated he prefers hands-on technical work over people management. Do you think he is a good fit for the Vice President of Engineering position?",
+				"sim_qg_ans": "The answer is no."
+			}
         ]
 	},
 	"almanacs-harmful-requests-simqg-fixed-counterfactuals": {
