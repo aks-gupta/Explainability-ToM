@@ -16,24 +16,39 @@ with_context = False
 simqg_model = configs.MODEL_CONFIGS['simqg_model']
 
 def get_data():
-	data = json.load(open(f'./data/data_{domain}.json'))['test']
-	return data
+	# data = json.load(open(f'./data/data_{domain}.json'))['test']
+	data = json.load(open(configs.DATA_FILE))
+	combined_data = data['test'] + data['train']
+	return combined_data
 
 def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context):
 
-	prompts = get_prompts_by_task(
-		f'{dataset}-{domain}-simqg-fixed-counterfactuals', 
+	num_examples = len(orig_inputs)
+	samples_per_label = num_samples // 2
+	
+	# Generate prompts for YES counterfactuals
+	prompts_yes = get_prompts_by_task(
+		f'{dataset}-{domain}-simqg-fixed-counterfactuals-yes', 
+		[{'orig_qn': item['question']} for item in data]
+	)
+	
+	# Generate prompts for NO counterfactuals
+	prompts_no = get_prompts_by_task(
+		f'{dataset}-{domain}-simqg-fixed-counterfactuals-no', 
 		[{'orig_qn': item['question']} for item in data]
 	)
 
-	num_examples = len(orig_inputs)
-
-	expanded = []
-	for prompt in prompts:
-		for _ in range(num_samples):
-			expanded.append(prompt)
-
-	prompts = expanded
+	# Interleave YES and NO prompts for each question
+	# So each question gets samples_per_label YES and samples_per_label NO
+	prompts = []
+	for i in range(num_examples):
+		# Add YES counterfactuals for this question
+		for _ in range(samples_per_label):
+			prompts.append(prompts_yes[i])
+		# Add NO counterfactuals for this question
+		for _ in range(samples_per_label):
+			prompts.append(prompts_no[i])
+	
 	assert len(prompts) == num_examples * num_samples
 
 	if ('gpt' in model):
@@ -45,6 +60,12 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 	sim_answers = []
  
 	for i, response in enumerate(responses):
+		if response is None or response == "Error: Unable to generate response":
+			print(f"WARNING: Response {i} is None or error, skipping")
+			sim_inputs.append(None)
+			sim_answers.append(None)
+			continue
+			
 		if model in ['o1-mini-2024-09-12', 'gpt-4.1-mini']:
 			response = response.replace("Here is my response.", "").strip()
 			answer_marker = "Your Answer to the Follow-up Question:"
@@ -52,12 +73,26 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 				parts = response.split(answer_marker)
 				sim_input = parts[0].strip()
 				sim_answer = parts[1].strip() if len(parts) > 1 else None
+				if sim_answer:
+					sim_answer = sim_answer.replace("The answer is", "").strip()
+					sim_answer = sim_answer.replace(".", "").strip()
+					if sim_answer not in ['yes', 'no']:
+						if 'yes' in sim_answer:
+							sim_answer = "yes"
+						elif 'no' in sim_answer:
+							sim_answer = "no"
+						else:
+							sim_answer = None
+			elif "\n\nThe answer is yes." in response:
+				sim_input = response.split("\n\nThe answer is yes.")[0].strip()
+				sim_answer = "yes"
+			elif "\n\nThe answer is no." in response:
+				sim_input = response.split("\n\nThe answer is no.")[0].strip()
+				sim_answer = "no"
 			else:
 				sim_input = response.strip()
 				sim_answer = None
-			if sim_answer:
-				sim_answer = sim_answer.replace("The answer is", "").strip()
-				sim_answer = sim_answer.replace(".", "").strip()
+			
 			sim_inputs.append(sim_input)
 			sim_answers.append(sim_answer)
 			assert len(sim_inputs) == len(sim_answers)
