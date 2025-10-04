@@ -7,6 +7,8 @@ import configs
 from simulate_qg import simulate_qg_hiring_decisions
 from prompts.load_prompt import get_prompts_by_task
 from api_client import call_together_api, call_openai_api
+import pickle
+from configs import DOMAIN
 
 dataset = configs.DATASET
 domain = configs.DOMAIN
@@ -21,7 +23,7 @@ def get_data():
 	# combined_data = data['test'] + data['train']
 	return data
 
-def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context):
+def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context):
 
 	num_examples = len(orig_inputs)
 	samples_per_label = num_samples // 2
@@ -135,6 +137,27 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 	assert len(final_inputs) == len(orig_inputs)
 	return final_inputs
 
+def preprocess_label_balanced_counterfactuals(path_to_cfs):
+	#Generate file for task model questions
+	with open(f"./data/label_balanced_counterfactuals_{DOMAIN}.json", "r") as f:
+		data = json.load(f)
+
+	# === Step 2: Prepare outputs ===
+	original_questions = {}
+	counterfactual_questions = {}
+	original_questions = [{"question": value["question"]} for key, value in data.items()]
+	for key, value in data.items():
+		key_int = int(key)  # ensure integer keys
+		# Extract only the counterfactual questions
+		counterfactual_questions[key_int] = {"questions": value["counterfactual_questions"]}
+
+	# === Step 3: Save both new PKL files ===
+	with open(f"./data/label_balanced_original_questions_{DOMAIN}.json", "w") as f:
+		json.dump(original_questions, f)
+
+	with open(f"./data/label_balanced_counterfactuals_{DOMAIN}.pkl", "wb") as f:
+		pickle.dump(counterfactual_questions, f)
+
 if __name__ == "__main__":
 	data = get_data()[:num_examples]
 	print(f'Generating fixed {num_counterfactual_qs} counterfactuals for {len(data)} examples from {domain} domain')
@@ -143,7 +166,7 @@ if __name__ == "__main__":
 		print(f"Fixed counterfactuals already exist for {domain} domain. Loaded from file.")
 	except FileNotFoundError:
 		print(f"No existing fixed counterfactuals found for {domain} domain. Generating new ones.")
-		counterfactuals = simulate_qg_hiring_decisions(
+		counterfactuals = simulate_qg(
 			model=simqg_model[0],
 			orig_inputs=data,
 			orig_tm_preds=[{'pred_expl': ''}]*len(data), # Dummy explanations
@@ -195,5 +218,9 @@ if __name__ == "__main__":
 	balanced_counterfactuals = {k: v for k, v in balanced_counterfactuals.items() 
                            if len(v['counterfactual_questions']) > 0}
 
-	with open(f'./data/label_balanced_counterfactuals_{domain}.json', 'w') as f:
+	path_to_cfs = f'./data/label_balanced_counterfactuals_{domain}.json'
+	with open(path_to_cfs, 'w') as f:
 		json.dump(balanced_counterfactuals, f, indent=4)
+	
+	#Add processed files for the pipeline
+	preprocess_label_balanced_counterfactuals(path_to_cfs)
