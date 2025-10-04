@@ -19,7 +19,7 @@ MODEL_CONFIGS = {
 
 # Dataset and domain settings
 DATASET = 'almanacs'
-DOMAIN = 'sycophancy'
+DOMAIN = 'harmful-requests'
 
 # Data file for this dataset/domain
-DATA_FILE = './data/data_hiring-decisions.json'
+DATA_FILE = './data/harmful_requests/almanacs_harmful_requests_question.json'
