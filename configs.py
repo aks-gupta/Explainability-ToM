@@ -19,7 +19,7 @@ MODEL_CONFIGS = {
 
 # Dataset and domain settings
 DATASET = 'almanacs'
-DOMAIN = 'hiring-decisions'
+DOMAIN = 'sycophancy'
 
 # Data file for this dataset/domain
 DATA_FILE = './data/data_hiring-decisions.json'

@@ -179,48 +179,50 @@ if __name__ == "__main__":
 
 
 	counterfactuals = json.load(open(f'./data/fixed_counterfactuals_{domain}.json'))
-
-	counterfactuals_yes = []
-	counterfactuals_no = []
-
-	for item in counterfactuals:
-		for q, a in zip(item['counterfactual_questions'], item['counterfactual_answers']):
-			if a and a.lower() in 'yes':
-				counterfactuals_yes.append({'question': q, 'answer': 'YES', 'orig_question': item['question']})
-			elif a and a.lower() in 'no':
-				counterfactuals_no.append({'question': q, 'answer': 'NO', 'orig_question': item['question']})
-
-	print(f"YES counterfactuals: {len(counterfactuals_yes)}, NO counterfactuals: {len(counterfactuals_no)}")
-	min_balanced = min(len(counterfactuals_yes), len(counterfactuals_no))
-	print(f"Balancing to {min_balanced} counterfactuals each")
  
-	count_yes = 0
-	count_no = 0
-	balanced_counterfactuals = {}
-	for item in counterfactuals:
-		qid = item['qid']
-		if qid not in balanced_counterfactuals:
-			balanced_counterfactuals[qid] = {
-				'question': item['question'],
-				'counterfactual_questions': [],
-				'counterfactual_answers': []
-			}
-		for q, a in zip(item['counterfactual_questions'], item['counterfactual_answers']):
-			if a and 'yes' in a.lower() and count_yes < min_balanced:
-				count_yes += 1
-				balanced_counterfactuals[qid]['counterfactual_questions'].append(q)
-				balanced_counterfactuals[qid]['counterfactual_answers'].append('yes')
-			elif a and 'no' in a.lower() and count_no < min_balanced:
-				count_no += 1
-				balanced_counterfactuals[qid]['counterfactual_questions'].append(q)
-				balanced_counterfactuals[qid]['counterfactual_answers'].append('no')
+	try:
+		balanced_counterfactuals = json.load(open(f'./data/label_balanced_counterfactuals_{domain}.json'))
+		print(f"Label balanced counterfactuals already exist for {domain} domain. Loaded from file.")
+		exit(0)
+	except FileNotFoundError:
+		print(f"No existing label balanced counterfactuals found for {domain} domain. Generating new ones.")
+		counterfactuals_yes = []
+		counterfactuals_no = []
 
-	balanced_counterfactuals = {k: v for k, v in balanced_counterfactuals.items() 
-                           if len(v['counterfactual_questions']) > 0}
+		for item in counterfactuals:
+			for q, a in zip(item['counterfactual_questions'], item['counterfactual_answers']):
+				if a and a.lower() in 'yes':
+					counterfactuals_yes.append({'question': q, 'answer': 'YES', 'orig_question': item['question']})
+				elif a and a.lower() in 'no':
+					counterfactuals_no.append({'question': q, 'answer': 'NO', 'orig_question': item['question']})
 
-	path_to_cfs = f'./data/label_balanced_counterfactuals_{domain}.json'
-	with open(path_to_cfs, 'w') as f:
-		json.dump(balanced_counterfactuals, f, indent=4)
+		print(f"YES counterfactuals: {len(counterfactuals_yes)}, NO counterfactuals: {len(counterfactuals_no)}")
+		min_balanced = min(len(counterfactuals_yes), len(counterfactuals_no))
+		print(f"Balancing to {min_balanced} counterfactuals each")
 	
-	#Add processed files for the pipeline
-	preprocess_label_balanced_counterfactuals(path_to_cfs)
+		count_yes = 0
+		count_no = 0
+		balanced_counterfactuals = {}
+		for item in counterfactuals:
+			qid = item['qid']
+			if qid not in balanced_counterfactuals:
+				balanced_counterfactuals[qid] = {
+					'question': item['question'],
+					'counterfactual_questions': [],
+					'counterfactual_answers': []
+				}
+			for q, a in zip(item['counterfactual_questions'], item['counterfactual_answers']):
+				if a and 'yes' in a.lower() and count_yes < min_balanced:
+					count_yes += 1
+					balanced_counterfactuals[qid]['counterfactual_questions'].append(q)
+					balanced_counterfactuals[qid]['counterfactual_answers'].append('yes')
+				elif a and 'no' in a.lower() and count_no < min_balanced:
+					count_no += 1
+					balanced_counterfactuals[qid]['counterfactual_questions'].append(q)
+					balanced_counterfactuals[qid]['counterfactual_answers'].append('no')
+
+		balanced_counterfactuals = {k: v for k, v in balanced_counterfactuals.items() 
+							if len(v['counterfactual_questions']) > 0}
+
+		with open(f'./data/label_balanced_counterfactuals_{domain}.json', 'w') as f:
+			json.dump(balanced_counterfactuals, f, indent=4)
