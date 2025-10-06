@@ -8,7 +8,7 @@ from tqdm import trange
 from task_qa import task_qa_hiring_decisions, task_qa_hiring_decisions_sim_inputs_list
 from simulate_qg import mix_sim_inputs, simulate_qg_hiring_decisions
 from simulate_qa import simulate_qa_hiring_decisions
-from utilities import create_folder_based_on_version
+from utilities import create_folder_based_on_version, preprocess_label_balanced_counterfactuals
 from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DATASET, DOMAIN, DATA_FILE
 
 
@@ -57,6 +57,8 @@ def main():
     num_examples = GENERAL_CONFIGS['num_examples']
     counterfactual_code_generation = GENERAL_CONFIGS['counterfactuals']
     num_counterfactual_qs = GENERAL_CONFIGS['num_counterfactual_qs']
+    model = 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free'
+    model_name = model.replace('/', '-').replace(':', '-')
 
     EX_IDXS = range(0, num_examples)
 
@@ -68,14 +70,15 @@ def main():
         for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
             # print(f"Running TaskQA: {taskqa_model} with {taskqa_expl_type}")                
             if counterfactual_code_generation=='LABEL_BALANCED':
-                with open(f'./data/label_balanced_original_questions_{DOMAIN}.json', "rb") as f:
+                preprocess_label_balanced_counterfactuals(f'./data/{model_name}_disagreement_filtered_{DOMAIN}_{num_examples}.json')
+                with open(f'./data/preprocessed/label_balanced_original_questions_{DOMAIN}.json', "rb") as f:
                     test_inputs = json.load(f)
             else:
                 test_inputs = json.load(open(DATA_FILE))['test']
             # print(f"DEBUG Pipeline: Loaded {len(test_inputs)} test inputs")
             # print(f"DEBUG Pipeline: Test inputs: {test_inputs[0]}")
             # print(f"DEBUG Pipeline: Test inputs: {test_inputs[1]}")
-            
+            EX_IDXS = range(0, len(test_inputs)) 
             step_1_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_1_out']}_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
             run_task_save_results(task_function=task_qa_hiring_decisions, out_file=step_1_out, ex_idxs=EX_IDXS,
 									model=taskqa_model, expl_type=taskqa_expl_type, inputs=test_inputs)
@@ -88,7 +91,7 @@ def main():
     if counterfactual_code_generation=='HARDCODED':
         step_2_out = f'data/hardcoded_counterfactuals.pkl'
     elif counterfactual_code_generation=='LABEL_BALANCED':
-        step_2_out = f"./data/label_balanced_counterfactuals_{DOMAIN}.pkl"
+        step_2_out = f"./data/preprocessed/label_balanced_counterfactuals_{DOMAIN}.pkl"
         print("Using label balanced counterfactuals")
     else:
         print("Generating counterfactuals with SimQG")
@@ -120,7 +123,11 @@ def main():
                         for simqa_model in MODEL_CONFIGS['simqa_model']:
                             print(f"Running SimQA: {simqa_model} with {taskqa_expl_type}")
                             step_3_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_3_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model.split('/')[0]}_simqa_{simqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
-                            orig_inputs = json.load(open(DATA_FILE))['test']
+                            if counterfactual_code_generation=='LABEL_BALANCED':
+                                with open(f'./data/preprocessed/label_balanced_original_questions_{DOMAIN}.json', "rb") as f:
+                                    orig_inputs = json.load(f)
+                            else:
+                                orig_inputs = json.load(open(DATA_FILE))['test']
                             orig_tm_preds = pkl.load(open(step_1_out, 'rb'))
                             sim_inputs_list = pkl.load(open(step_2_out, 'rb'))
                             run_task_save_results(task_function=simulate_qa_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_3_out,

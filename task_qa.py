@@ -24,7 +24,7 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
     if ('o1-mini' in model) or ('gpt-4.1-mini' in model) or ('meta.llama3-1-8b-instruct-v1:0' in model) or ('llama3-2-11b-instruct' in model):
         pred_expls = call_openai_api(model=model, prompts=prompts,
                                 temperature=0, max_tokens=200, stop='\n\n')
-    elif ('llama' in model):
+    elif ('llama' in model) or ('deepseek' in model):
         pred_expls = call_together_api(model=model, prompts=prompts,
                                 temperature=0, max_tokens=200, stop='\n\n')
     assert len(pred_expls) == len(prompts)
@@ -62,10 +62,15 @@ def task_qa_hiring_decisions_sim_inputs_list(model, expl_type, sim_inputs_list):
     # print(type(preds), len(preds))
     # regroup preds according to examples (multiple simulation inputs for each original input)
     example_preds = []
-    num_samples = len(sim_inputs_list)
-    toAdd = int(len(preds)/num_samples)
+    num_examples = []
+    for cfs in sim_inputs_list:
+        num_examples.append(len(cfs['questions']))
+    # num_samples = len(sim_inputs_list)
+    # toAdd = int(len(preds)/num_samples)
     ex_idx=0
+    count = 0
     while ex_idx < len(preds):
-        example_preds.append(preds[ex_idx:ex_idx+toAdd])
-        ex_idx+=toAdd
+        example_preds.append(preds[ex_idx:ex_idx+num_examples[count]])
+        ex_idx+=num_examples[count]
+        count+=1
     return example_preds

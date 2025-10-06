@@ -10,11 +10,6 @@ from utilities import return_last_max_version
 print(os.getcwd())
 
 if __name__ == '__main__':
-	num_examples = GENERAL_CONFIGS['num_examples']
-	num_counterfactual_qs = GENERAL_CONFIGS['num_counterfactual_qs']
-	if GENERAL_CONFIGS['counterfactuals']=='HARDCODED':
-		num_counterfactual_qs = 1
-	EX_IDXS = range(0, num_examples*num_counterfactual_qs)
 	simqg_model = MODEL_CONFIGS['simqg_model'][0]
 	top_p = 1.0
 	simqa_model = MODEL_CONFIGS['simqa_model'][0]
@@ -65,7 +60,7 @@ if __name__ == '__main__':
 				ex_simulatable_count, ex_correct_simul_count = 0, 0
 				unknown_count = 0
 				unknown_set = set()
-				for exidx in EX_IDXS:
+				for exidx in range(count):
 					simqa_ann = simans_count[exidx][0]
 					taskqa_pred = taskans_count[exidx][0]
 					if simqa_ann in ['no', 'yes']:

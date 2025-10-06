@@ -1,4 +1,8 @@
 import os
+import pickle
+import json
+import configs
+
 
 def list_files_in_folder(folder_path):
     try:
@@ -12,6 +16,29 @@ def list_files_in_folder(folder_path):
         print(f"The folder '{folder_path}' does not exist.")
     except PermissionError:
         print(f"Permission denied to access '{folder_path}'.")
+    
+def preprocess_label_balanced_counterfactuals(path_to_cfs):
+	#Generate file for task model questions
+	with open(path_to_cfs, "r") as f:
+		data = json.load(f)
+
+	# === Step 2: Prepare outputs ===
+	original_questions = {}
+	counterfactual_questions = {}
+	original_questions = [{"question": value["question"]} for key, value in data.items()]
+     
+	for seq_key, (key, value) in enumerate(data.items()):
+		seq_key = int(seq_key)  # ensure integer keys
+		# Extract only the counterfactual questions
+		counterfactual_questions[seq_key] = {"questions": value["counterfactual_questions"]}
+
+	# === Step 3: Save both new PKL files ===
+	with open(f"./data/preprocessed/label_balanced_original_questions_{configs.DOMAIN}.json", "w") as f:
+		json.dump(original_questions, f)
+
+	with open(f"./data/preprocessed/label_balanced_counterfactuals_{configs.DOMAIN}.pkl", "wb") as f:
+		pickle.dump(counterfactual_questions, f)
+          
 
 def create_folder(parent_directory, new_folder_name):
     # Construct the full path
