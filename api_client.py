@@ -41,7 +41,7 @@ def call_together_api(model, prompts, bsz=1, num_processes=1, temperature=0, top
                 messages=[{"role": "user", "content": prompt}],
                 temperature=temperature,
                 top_p=top_p,
-                max_tokens=max_tokens,
+                # max_tokens=max_tokens,
                 # stop=stop
             )
             responses.append(response.choices[0].message.content)

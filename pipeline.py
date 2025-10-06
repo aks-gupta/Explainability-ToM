@@ -70,7 +70,7 @@ def main():
         for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
             # print(f"Running TaskQA: {taskqa_model} with {taskqa_expl_type}")                
             if counterfactual_code_generation=='LABEL_BALANCED':
-                preprocess_label_balanced_counterfactuals(f'./data/{model_name}_disagreement_filtered_{DOMAIN}_{num_examples}.json')
+                preprocess_label_balanced_counterfactuals(f'./data/disagreement_dataset/{model_name}_disagreement_filtered_{DOMAIN}_{num_examples}.json')
                 with open(f'./data/preprocessed/label_balanced_original_questions_{DOMAIN}.json', "rb") as f:
                     test_inputs = json.load(f)
             else:
@@ -84,73 +84,73 @@ def main():
 									model=taskqa_model, expl_type=taskqa_expl_type, inputs=test_inputs)
             print(f"TaskQA completed: {os.path.basename(step_1_out)}")
 
-    # STEP 2: SimQG
-    print("\n" + "="*60)
-    print("STEP 2: SimQG - Counterfactual Question Generation")
-    print("="*60)
-    if counterfactual_code_generation=='HARDCODED':
-        step_2_out = f'data/hardcoded_counterfactuals.pkl'
-    elif counterfactual_code_generation=='LABEL_BALANCED':
-        step_2_out = f"./data/preprocessed/label_balanced_counterfactuals_{DOMAIN}.pkl"
-        print("Using label balanced counterfactuals")
-    else:
-        print("Generating counterfactuals with SimQG")
-        for taskqa_model in MODEL_CONFIGS['taskqa_model']:
-            for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
-            # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
-                for simqg_model in MODEL_CONFIGS['simqg_model']:
-                    for explanation in ['withexpl']:
-                        for top_p in [1.0]:
-                            print(f"Running SimQG: {simqg_model} with {taskqa_expl_type}")
-                            step_2_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_2_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
-                            orig_inputs = json.load(open(DATA_FILE))['test']
-                            orig_tm_preds = pkl.load(open(step_1_out, 'rb'))
-                            run_task_save_results(task_function=simulate_qg_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_2_out,
-                                                    model=simqg_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
-                                                    top_p=top_p, num_samples=num_counterfactual_qs, with_context=explanation)
-                            print(f"SimQG completed: {os.path.basename(step_2_out)}")
+    # # STEP 2: SimQG
+    # print("\n" + "="*60)
+    # print("STEP 2: SimQG - Counterfactual Question Generation")
+    # print("="*60)
+    # if counterfactual_code_generation=='HARDCODED':
+    #     step_2_out = f'data/hardcoded_counterfactuals.pkl'
+    # elif counterfactual_code_generation=='LABEL_BALANCED':
+    #     step_2_out = f"./data/preprocessed/label_balanced_counterfactuals_{DOMAIN}.pkl"
+    #     print("Using label balanced counterfactuals")
+    # else:
+    #     print("Generating counterfactuals with SimQG")
+    #     for taskqa_model in MODEL_CONFIGS['taskqa_model']:
+    #         for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
+    #         # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+    #             for simqg_model in MODEL_CONFIGS['simqg_model']:
+    #                 for explanation in ['withexpl']:
+    #                     for top_p in [1.0]:
+    #                         print(f"Running SimQG: {simqg_model} with {taskqa_expl_type}")
+    #                         step_2_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_2_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
+    #                         orig_inputs = json.load(open(DATA_FILE))['test']
+    #                         orig_tm_preds = pkl.load(open(step_1_out, 'rb'))
+    #                         run_task_save_results(task_function=simulate_qg_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_2_out,
+    #                                                 model=simqg_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
+    #                                                 top_p=top_p, num_samples=num_counterfactual_qs, with_context=explanation)
+    #                         print(f"SimQG completed: {os.path.basename(step_2_out)}")
     
-    # STEP 3: SimQA
-    print("\n" + "="*60)
-    print("STEP 3: SimQA - Answer Counterfactual Questions")
-    print("="*60)
-    for taskqa_model in MODEL_CONFIGS['taskqa_model']:
-        for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
-        # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
-            for simqg_model in MODEL_CONFIGS['simqg_model']: # expl
-                for explanation in ['withexpl']:
-                    for top_p in [1.0]:
-                        for simqa_model in MODEL_CONFIGS['simqa_model']:
-                            print(f"Running SimQA: {simqa_model} with {taskqa_expl_type}")
-                            step_3_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_3_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model.split('/')[0]}_simqa_{simqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
-                            if counterfactual_code_generation=='LABEL_BALANCED':
-                                with open(f'./data/preprocessed/label_balanced_original_questions_{DOMAIN}.json', "rb") as f:
-                                    orig_inputs = json.load(f)
-                            else:
-                                orig_inputs = json.load(open(DATA_FILE))['test']
-                            orig_tm_preds = pkl.load(open(step_1_out, 'rb'))
-                            sim_inputs_list = pkl.load(open(step_2_out, 'rb'))
-                            run_task_save_results(task_function=simulate_qa_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_3_out,
-                                                model=simqa_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
-                                                sim_inputs_list=sim_inputs_list,  include_expl=explanation=='withexpl')
-                            print(f"SimQA completed: {os.path.basename(step_3_out)}")
+    # # STEP 3: SimQA
+    # print("\n" + "="*60)
+    # print("STEP 3: SimQA - Answer Counterfactual Questions")
+    # print("="*60)
+    # for taskqa_model in MODEL_CONFIGS['taskqa_model']:
+    #     for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
+    #     # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+    #         for simqg_model in MODEL_CONFIGS['simqg_model']: # expl
+    #             for explanation in ['withexpl']:
+    #                 for top_p in [1.0]:
+    #                     for simqa_model in MODEL_CONFIGS['simqa_model']:
+    #                         print(f"Running SimQA: {simqa_model} with {taskqa_expl_type}")
+    #                         step_3_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_3_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model.split('/')[0]}_simqa_{simqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
+    #                         if counterfactual_code_generation=='LABEL_BALANCED':
+    #                             with open(f'./data/preprocessed/label_balanced_original_questions_{DOMAIN}.json', "rb") as f:
+    #                                 orig_inputs = json.load(f)
+    #                         else:
+    #                             orig_inputs = json.load(open(DATA_FILE))['test']
+    #                         orig_tm_preds = pkl.load(open(step_1_out, 'rb'))
+    #                         sim_inputs_list = pkl.load(open(step_2_out, 'rb'))
+    #                         run_task_save_results(task_function=simulate_qa_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_3_out,
+    #                                             model=simqa_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
+    #                                             sim_inputs_list=sim_inputs_list,  include_expl=explanation=='withexpl')
+    #                         print(f"SimQA completed: {os.path.basename(step_3_out)}")
 
-    # STEP 4: TaskQA on SimInputs
-    print("\n" + "="*60)
-    print("STEP 4: TaskQA on Simulated Inputs")
-    print("="*60)
-    for taskqa_model in MODEL_CONFIGS['taskqa_model']:
-        for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
-        # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
-            for simqg_model in MODEL_CONFIGS['simqg_model']:
-                for explanation in ['withexpl']:
-                    for top_p in [1.0]:
-                        print(f"Running TaskQA on SimInputs: {taskqa_model} with {taskqa_expl_type}")
-                        step_4_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_4_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model.split('/')[0]}_taskqa_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
-                        sim_inputs_list = pkl.load(open(step_2_out, 'rb'))
-                        run_task_save_results(task_function=task_qa_hiring_decisions_sim_inputs_list, ex_idxs=EX_IDXS, out_file=step_4_out,
-                                                model=taskqa_model, expl_type=taskqa_expl_type, sim_inputs_list=sim_inputs_list)
-                        print(f"TaskQA on SimInputs completed: {os.path.basename(step_4_out)}")
+    # # STEP 4: TaskQA on SimInputs
+    # print("\n" + "="*60)
+    # print("STEP 4: TaskQA on Simulated Inputs")
+    # print("="*60)
+    # for taskqa_model in MODEL_CONFIGS['taskqa_model']:
+    #     for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
+    #     # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+    #         for simqg_model in MODEL_CONFIGS['simqg_model']:
+    #             for explanation in ['withexpl']:
+    #                 for top_p in [1.0]:
+    #                     print(f"Running TaskQA on SimInputs: {taskqa_model} with {taskqa_expl_type}")
+    #                     step_4_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_4_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model.split('/')[0]}_taskqa_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
+    #                     sim_inputs_list = pkl.load(open(step_2_out, 'rb'))
+    #                     run_task_save_results(task_function=task_qa_hiring_decisions_sim_inputs_list, ex_idxs=EX_IDXS, out_file=step_4_out,
+    #                                             model=taskqa_model, expl_type=taskqa_expl_type, sim_inputs_list=sim_inputs_list)
+    #                     print(f"TaskQA on SimInputs completed: {os.path.basename(step_4_out)}")
     
     # Pipeline Completion
     print("\n" + "="*60)
