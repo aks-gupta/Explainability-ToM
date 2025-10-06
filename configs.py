@@ -1,5 +1,5 @@
 GENERAL_CONFIGS = {
-    'num_examples': 5,
+    'num_examples': 500,
     'k_shot': 3, #0->1, 1->2, 3->3, 5->4
     'counterfactuals': 'LABEL_BALANCED', #HARDCODED/GENERATED/LABEL_BALANCED
     'num_counterfactual_qs': 2, #set to 1 if HARDCODED and 2 if LABEL_BALANCED
@@ -19,7 +19,7 @@ MODEL_CONFIGS = {
 
 # Dataset and domain settings
 DATASET = 'almanacs'
-DOMAIN = 'harmful-requests'
+DOMAIN = 'hiring-decisions'
 
 # Data file for this dataset/domain
 DATA_FILE = './data/harmful_requests/almanacs_harmful_requests_question.json'

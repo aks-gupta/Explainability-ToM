@@ -21,7 +21,7 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
     distinct_inputs = [{'question': question} for question in distinct_qns]
     prompts = get_prompts_by_task(f'{DATASET}-{DOMAIN}-taskqa-{expl_type}',
                                   [{'question': input['question']} for input in distinct_inputs])
-    if ('o1-mini' in model) or ('gpt-4.1-mini' in model):
+    if ('o1-mini' in model) or ('gpt-4.1-mini' in model) or ('meta.llama3-1-8b-instruct-v1:0' in model) or ('llama3-2-11b-instruct' in model):
         pred_expls = call_openai_api(model=model, prompts=prompts,
                                 temperature=0, max_tokens=200, stop='\n\n')
     elif ('llama' in model):

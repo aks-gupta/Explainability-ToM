@@ -18,9 +18,9 @@ with_context = False
 simqg_model = configs.MODEL_CONFIGS['simqg_model']
 
 def get_data():
-	# data = json.load(open(f'./data/data_{domain}.json'))['test']
-	data = json.load(open(configs.DATA_FILE))
-	data = data['test'] + data['train']
+	data = json.load(open(f'./data/data_{domain}.json'))['test']
+	# data = json.load(open(configs.DATA_FILE))
+	# data = data['test'] + data['train']
 	return data
 
 def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_context):
@@ -30,13 +30,13 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
 	
 	# Generate prompts for YES counterfactuals
 	prompts_yes = get_prompts_by_task(
-		f'{dataset}-{domain}-simqg-fixed-counterfactuals-yes', 
+		f'{dataset}-{domain}-simqg-fixed-counterfactuals-ambiguous-yes', 
 		[{'orig_qn': item['question']} for item in data]
 	)
 	
 	# Generate prompts for NO counterfactuals
 	prompts_no = get_prompts_by_task(
-		f'{dataset}-{domain}-simqg-fixed-counterfactuals-no', 
+		f'{dataset}-{domain}-simqg-fixed-counterfactuals-ambiguous-no', 
 		[{'orig_qn': item['question']} for item in data]
 	)
 
@@ -162,7 +162,7 @@ if __name__ == "__main__":
 	data = get_data()[:num_examples]
 	print(f'Generating fixed {num_counterfactual_qs} counterfactuals for {len(data)} examples from {domain} domain')
 	try:
-		counterfactuals = json.load(open(f'./data/fixed_counterfactuals_{domain}.json'))
+		counterfactuals = json.load(open(f'./data/fixed_counterfactuals_{domain}_{num_examples}.json'))
 		print(f"Fixed counterfactuals already exist for {domain} domain. Loaded from file.")
 	except FileNotFoundError:
 		print(f"No existing fixed counterfactuals found for {domain} domain. Generating new ones.")
@@ -174,14 +174,14 @@ if __name__ == "__main__":
 			num_samples=num_counterfactual_qs,
 			with_context=with_context
 		)
-		with open(f'./data/fixed_counterfactuals_{domain}.json', 'w') as f:
+		with open(f'./data/fixed_counterfactuals_{domain}_{num_examples}.json', 'w') as f:
 			json.dump(counterfactuals, f, indent=4)
 
 
-	counterfactuals = json.load(open(f'./data/fixed_counterfactuals_{domain}.json'))
+	counterfactuals = json.load(open(f'./data/fixed_counterfactuals_{domain}_{num_examples}.json'))
  
 	try:
-		balanced_counterfactuals = json.load(open(f'./data/label_balanced_counterfactuals_{domain}.json'))
+		balanced_counterfactuals = json.load(open(f'./data/label_balanced_counterfactuals_{domain}_{num_examples}.json'))
 		print(f"Label balanced counterfactuals already exist for {domain} domain. Loaded from file.")
 		exit(0)
 	except FileNotFoundError:
@@ -224,5 +224,5 @@ if __name__ == "__main__":
 		balanced_counterfactuals = {k: v for k, v in balanced_counterfactuals.items() 
 							if len(v['counterfactual_questions']) > 0}
 
-		with open(f'./data/label_balanced_counterfactuals_{domain}.json', 'w') as f:
+		with open(f'./data/label_balanced_counterfactuals_{domain}_{num_examples}.json', 'w') as f:
 			json.dump(balanced_counterfactuals, f, indent=4)

@@ -2,15 +2,29 @@ import json
 import configs
 from task_qa import task_qa_hiring_decisions
 import random
+import inspect
 
 dataset = configs.DATASET
 domain = configs.DOMAIN
+# model = 'meta.llama3-1-8b-instruct-v1:0'
 model = 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free'
+# model = 'llama3-2-11b-instruct'
 expl_type = 'cot'
 num_examples = configs.GENERAL_CONFIGS['num_examples']
 
+def debug_print(var):
+    print("-"*80)
+    callers_locals = inspect.currentframe().f_back.f_locals
+    for name, val in callers_locals.items():
+        if val is var:
+            print(f"{name.toupper()}")
+            print(var)
+            return
+    print(f"<unknown> = {var}")
+    print("-"*80)
+
 def load_label_balanced_counterfactuals():
-    data = json.load(open(f'./data/label_balanced_counterfactuals_{domain}.json'))
+    data = json.load(open(f'./data/label_balanced_counterfactuals_{domain}_{num_examples}.json'))
     
     limited_data = {}
     for i, (qid, item) in enumerate(data.items()):
@@ -46,7 +60,6 @@ def predict_counterfactuals(data):
             print(f"Explanation: {pred_expl}")
             print(f"{'='*80}")
             idx += 1
-    
     return data
 
 def filter_by_agreement(data):
@@ -119,13 +132,15 @@ if __name__ == "__main__":
     
     data_with_predictions = predict_counterfactuals(data)
     
-    with open(f'./data/model_predictions_{domain}.json', 'w') as f:
+    model_name = model.replace('/', '-').replace(':', '-')
+    
+    with open(f'./data/{model_name}_predictions_{domain}_{num_examples}.json', 'w') as f:
         json.dump(data_with_predictions, f, indent=4)
-    print(f"Saved all predictions to ./data/model_predictions_{domain}.json")
+    print(f"Saved all predictions to ./data/{model_name}_predictions_{domain}_{num_examples}.json")
     
     final_data = filter_by_agreement(data_with_predictions)
     
-    with open(f'./data/disagreement_filtered_{domain}.json', 'w') as f:
+    with open(f'./data/{model_name}_disagreement_filtered_{domain}_{num_examples}.json', 'w') as f:
         json.dump(final_data, f, indent=4)
-    print(f"Saved filtered dataset to ./data/disagreement_filtered_{domain}.json")
+    print(f"Saved filtered dataset to ./data/{model_name}_disagreement_filtered_{domain}_{num_examples}.json")
 
