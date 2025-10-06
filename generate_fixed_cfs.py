@@ -18,7 +18,7 @@ with_context = False
 simqg_model = configs.MODEL_CONFIGS['simqg_model']
 
 def get_data():
-	data = json.load(open(f'./data/data_{domain}.json'))['test']
+	data = json.load(open(f'./data/dataset/data_{domain}.json'))['test']
 	# data = json.load(open(configs.DATA_FILE))
 	# data = data['test'] + data['train']
 	return data

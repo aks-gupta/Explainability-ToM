@@ -42,7 +42,7 @@ def simulate_qg_hiring_decisions(model, orig_inputs, orig_tm_preds, top_p, num_s
 
 	if ('o1-mini' in model) or ('gpt-4.1-mini' in model):
 		responses = call_openai_api(model=model, prompts=prompts, temperature=1, top_p=top_p, stop='\n\n')
-	elif ('llama' in model):
+	elif ('llama' in model) or ('deepseek' in model):
 		responses = call_together_api(model=model, prompts=prompts, temperature=1, top_p=top_p, stop='\n\n')
 	
 	print(f"DEBUG SimQG: Received {len(responses)} responses")

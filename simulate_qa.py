@@ -34,8 +34,11 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 				majority_vote=None,
 				annotated_examples=None):
 	assert len(orig_inputs) == len(orig_tm_preds) == len(sim_inputs_list)
-	num_examples = len(orig_inputs)
+	num_examples = []
 	k_shot = GENERAL_CONFIGS['k_shot']
+
+	for cfs in sim_inputs_list:
+		num_examples.append(len(cfs['questions']))
 	
 	if include_expl:
 		prompts = get_prompts_by_task(
@@ -72,7 +75,7 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 		pred_expls = call_openai_api(model=model, prompts=deduplicated_prompts,
 								bsz=16, num_processes=8,
 								temperature=0, max_tokens=200, stop='\n')
-	elif ('llama' in model):
+	elif ('llama' in model) or ('deepseek' in model):
 		pred_expls = call_together_api(model=model, prompts=deduplicated_prompts,
 								bsz=16, num_processes=8,
 								temperature=0, max_tokens=200, stop='\n')
@@ -94,9 +97,10 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 	# regroup preds according to examples (multiple simulation questions correspond to each original question)
 	assert len(preds) == len(prompts)
 	example_preds = []
-	toAdd = int(len(preds)/num_examples)
 	ex_idx=0
+	count = 0 
 	while ex_idx < len(preds):
-		example_preds.append(preds[ex_idx:ex_idx+toAdd])
-		ex_idx+=toAdd
+		example_preds.append(preds[ex_idx:ex_idx+num_examples[count]])
+		ex_idx+=num_examples[count]
+		count+=1
 	return example_preds
