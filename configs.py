@@ -1,5 +1,6 @@
 GENERAL_CONFIGS = {
-    'num_examples': 500,
+    'num_examples': 2,
+    'num_disagreement_qs': 500,
     'k_shot': 3, #0->1, 1->2, 3->3, 5->4
     'counterfactuals': 'LABEL_BALANCED', #HARDCODED/GENERATED/LABEL_BALANCED
     'num_counterfactual_qs': 2, #set to 1 if HARDCODED and 2 if LABEL_BALANCED
@@ -14,12 +15,12 @@ MODEL_CONFIGS = {
     'taskqa_model': ['meta-llama/Llama-3.3-70B-Instruct-Turbo-Free'], #['meta-llama/Llama-3.3-70B-Instruct-Turbo-Free', 'gpt-4.1-mini', 'o1-mini-2024-09-12'],
     'taskqa_expl_type': ['cot'], #'concise', 'detailed', 'toxic', 'nontoxic'
     'simqg_model': ['gpt-4.1-mini'], #['o1-mini-2024-09-12'],
-    'simqa_model': ['meta-llama/Llama-3.3-70B-Instruct-Turbo-Free'] #['o1-mini-2024-09-12']
+    'simqa_model': ['gpt-4.1-mini'] #['o1-mini-2024-09-12']
 }
 
 # Dataset and domain settings
 DATASET = 'almanacs'
-DOMAIN = 'sycophancy' # Options: 'hiring-decisions', 'sycophancy', 'harmful-requests'
+DOMAIN = 'hiring-decisions' # Options: 'hiring-decisions', 'sycophancy', 'harmful-requests'
 
 # Data file for this dataset/domain
-DATA_FILE = './data/harmful_requests/almanacs_harmful_requests_question.json'
+DATA_FILE = './data/hiring_decisions/almanacs_hiring_decisions_question.json'
