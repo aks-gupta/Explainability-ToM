@@ -1,5 +1,5 @@
 GENERAL_CONFIGS = {
-    'num_examples': 2,
+    'num_examples': 100,
     'num_disagreement_qs': 500,
     'k_shot': 3, #0->1, 1->2, 3->3, 5->4
     'counterfactuals': 'LABEL_BALANCED', #HARDCODED/GENERATED/LABEL_BALANCED

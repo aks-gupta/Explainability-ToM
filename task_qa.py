@@ -31,16 +31,16 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
     if expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
         pred_answers = []
         for i, pred_expl in enumerate(pred_expls):
-            print(f"DEBUG TaskQA Response {i}: {pred_expl}")
+            # print(f"DEBUG TaskQA Response {i}: {pred_expl}")
             if pred_expl.endswith('So the answer is no.'):
                 pred_answers.append('no')
-                print(f"DEBUG TaskQA: Extracted 'no' from response {i}")
+                # print(f"DEBUG TaskQA: Extracted 'no' from response {i}")
             elif pred_expl.endswith('So the answer is yes.'):
                 pred_answers.append('yes')
-                print(f"DEBUG TaskQA: Extracted 'yes' from response {i}")
+                # print(f"DEBUG TaskQA: Extracted 'yes' from response {i}")
             else:
                 pred_answers.append('neither')
-                print(f"DEBUG TaskQA: Extracted 'neither' from response {i} (no clear ending)")
+                # print(f"DEBUG TaskQA: Extracted 'neither' from response {i} (no clear ending)")
         preds = [{'pred_ans': pred_ans, 'pred_expl': pred_expl.strip()} for pred_ans, pred_expl in
                  zip(pred_answers, pred_expls)]
     else:

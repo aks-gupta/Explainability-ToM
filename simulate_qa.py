@@ -11,7 +11,7 @@ import re
 import os
 
 def extract_sim_qa_ans(sim_qa_expl):
-	print(f"DEBUG SimQA: Processing response: {sim_qa_expl}")
+	# print(f"DEBUG SimQA: Processing response: {sim_qa_expl}")
 	cannot_guess = 'I cannot guess' in sim_qa_expl
 	pattern_no = r'("?)(?:\bno\b)(?=[\s.,!?;:]|$)\1'
 	pattern_yes = r'("?)(?:\byes\b)(?=[\s.,!?;:]|$)\1'
