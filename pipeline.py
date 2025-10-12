@@ -10,9 +10,13 @@ from simulate_qg import mix_sim_inputs, simulate_qg_hiring_decisions
 from simulate_qa import simulate_qa_hiring_decisions
 from utilities import create_folder_based_on_version, preprocess_label_balanced_counterfactuals
 from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DATASET, DOMAIN, DATA_FILE
+from calculate_precision import calculate_precision
 
 
 def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
+    if os.path.exists(out_file):
+        print(f"Results already exist at {out_file}, skipping...")
+        return
     all_preds = {}
     if os.path.exists(out_file):
         all_preds = pkl.load(open(out_file, 'rb'))
@@ -28,10 +32,9 @@ def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
     pkl.dump(all_preds, open(out_file, 'wb'))
 
-
 def main():
     print("="*60)
-    print("PIPELINE CONFIGURATION")
+    print("\033[1m\033[94mPIPELINE CONFIGURATION\033[0m")
     print("="*60)
     print(f"Dataset: {DATASET}")
     print(f"Domain: {DOMAIN}")
@@ -48,9 +51,10 @@ def main():
     
     f_log = open('log.txt', 'w')
     timestamp = time.time()
-
+    
     #Create folder based on versions
-    full_path = create_folder_based_on_version()
+    folder_name = f"{DOMAIN}_{MODEL_CONFIGS['taskqa_model'][0].split('/')[0]}_{GENERAL_CONFIGS['num_examples']}"
+    full_path = create_folder_based_on_version(folder_name)
     print(f"Output Directory: {full_path}")
 
     #Get config values
@@ -58,20 +62,22 @@ def main():
     num_disagreement_qs = GENERAL_CONFIGS['num_disagreement_qs']
     counterfactual_code_generation = GENERAL_CONFIGS['counterfactuals']
     num_counterfactual_qs = GENERAL_CONFIGS['num_counterfactual_qs']
-    model = 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free'
-    model_name = model.replace('/', '-').replace(':', '-')
 
     EX_IDXS = range(0, num_examples)
+    
+    print("Copying config file to output directory for reference.")
+    os.system(f'cp configs.py {full_path}/configs.txt')
+    print("Config file copied as txt.")
 
     # STEP 1: TaskQA
     print("\n" + "="*60)
-    print("STEP 1: TaskQA - Initial Question Answering")
+    print("\033[1m\033[94mSTEP 1: TaskQA - Initial Question Answering\033[0m")
     print("="*60)
     for taskqa_model in MODEL_CONFIGS['taskqa_model']:
         for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
             # print(f"Running TaskQA: {taskqa_model} with {taskqa_expl_type}")                
             if counterfactual_code_generation=='LABEL_BALANCED':
-                preprocess_label_balanced_counterfactuals(f'./data/disagreement_dataset/{model_name}_disagreement_filtered_{DOMAIN}_{num_disagreement_qs}.json')
+                preprocess_label_balanced_counterfactuals(f'./data/disagreement_dataset/disagreement_filtered_{DOMAIN}_{num_disagreement_qs}.json')
                 with open(f'./data/preprocessed/label_balanced_original_questions_{DOMAIN}.json', "rb") as f:
                     test_inputs = json.load(f)
             else:
@@ -87,7 +93,7 @@ def main():
 
     # STEP 2: SimQG
     print("\n" + "="*60)
-    print("STEP 2: SimQG - Counterfactual Question Generation")
+    print("\033[1m\033[94mSTEP 2: SimQG - Counterfactual Question Generation\033[0m")
     print("="*60)
     if counterfactual_code_generation=='HARDCODED':
         step_2_out = f'data/hardcoded_counterfactuals.pkl'
@@ -113,7 +119,7 @@ def main():
     
     # STEP 3: SimQA
     print("\n" + "="*60)
-    print("STEP 3: SimQA - Answer Counterfactual Questions")
+    print("\033[1m\033[94mSTEP 3: SimQA - Answer Counterfactual Questions\033[0m")
     print("="*60)
     for taskqa_model in MODEL_CONFIGS['taskqa_model']:
         for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
@@ -138,7 +144,7 @@ def main():
 
     # STEP 4: TaskQA on SimInputs
     print("\n" + "="*60)
-    print("STEP 4: TaskQA on Simulated Inputs")
+    print("\033[1m\033[94mSTEP 4: TaskQA on Simulated Inputs\033[0m")
     print("="*60)
     for taskqa_model in MODEL_CONFIGS['taskqa_model']:
         for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
@@ -149,17 +155,24 @@ def main():
                         print(f"Running TaskQA on SimInputs: {taskqa_model} with {taskqa_expl_type}")
                         step_4_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_4_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model.split('/')[0]}_taskqa_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
                         sim_inputs_list = pkl.load(open(step_2_out, 'rb'))
+                        # all_sim_inputs = [{'question': input} for sim_inputs in sim_inputs_list for input in sim_inputs['questions']]
                         run_task_save_results(task_function=task_qa_hiring_decisions_sim_inputs_list, ex_idxs=EX_IDXS, out_file=step_4_out,
                                                 model=taskqa_model, expl_type=taskqa_expl_type, sim_inputs_list=sim_inputs_list)
                         print(f"TaskQA on SimInputs completed: {os.path.basename(step_4_out)}")
     
     # Pipeline Completion
     print("\n" + "="*60)
-    print("PIPELINE COMPLETED SUCCESSFULLY!")
+    print("\033[1m\033[94mPIPELINE COMPLETED SUCCESSFULLY!\033[0m")
     print("="*60)
+    print(f"Total Time Taken: {time.time() - timestamp:.2f} seconds")
     print(f"All results saved in: {full_path}")
     print(f"Log file: log.txt")
     print("="*60)
-
+    
+    print("\n" + "="*60)
+    print("\033[1m\033[94mCALCULATING PRECISION\033[0m")
+    print("="*60)
+    calculate_precision()
+    
 if __name__ == '__main__':
 	main()

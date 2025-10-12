@@ -9,21 +9,21 @@ from utilities import return_last_max_version
 
 print(os.getcwd())
 
-if __name__ == '__main__':
+def calculate_precision():
 	simqg_model = MODEL_CONFIGS['simqg_model'][0]
 	top_p = 1.0
 	simqa_model = MODEL_CONFIGS['simqa_model'][0]
 	with_context = True
-	full_path = return_last_max_version()
-	print(full_path)
+	folder_name = f"{DOMAIN}_{MODEL_CONFIGS['taskqa_model'][0].split('/')[0]}_{GENERAL_CONFIGS['num_examples']}"
+	full_path = return_last_max_version(folder_path=folder_name)
+	print(f"Calculating precision for folder: {full_path}")
 
 	setting2exidx2precision = {}
 	for taskqa_model in MODEL_CONFIGS['taskqa_model']:
 		for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
 		# for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
 			for explanation in ['withexpl']:
-				print("-------" + str(taskqa_expl_type) + "--------")
-				print(explanation)
+				print("------" + str(taskqa_expl_type) + "--------")
 				setting = (taskqa_model, taskqa_expl_type)
 				setting2exidx2precision[setting] = {}
 
@@ -79,4 +79,20 @@ if __name__ == '__main__':
 	settings = list(setting2exidx2precision.keys())
 	for setting in settings:
 		print(' '.join(setting), round(np.mean(setting2exidx2precision[setting]) * 100, 1))
-	print(">><<")
+ 
+	with open(f'{full_path}/precision_results.txt', 'w') as f:
+		f.write(f"Settings: simqg_model={simqg_model}, top_p={top_p}, simqa_model={simqa_model}, with_context={with_context}\n")
+		f.write(f"TaskQA Models: {MODEL_CONFIGS['taskqa_model']}\n")
+		f.write(f"TaskQA Explanation Types: {MODEL_CONFIGS['taskqa_expl_type']}\n")
+		f.write("SIMULATION ANSWER COUNTS\n")
+		f.write(simans_count.__str__() + "\n")
+		f.write("TASK ANSWER COUNTS\n")
+		f.write(taskans_count.__str__() + "\n")
+		f.write("UNKNOWN COUNTS\n")
+		f.write(str(unknown_count) + "\n")
+		f.write("UNKNOWN SET\n")
+		f.write(unknown_set.__str__() + "\n")
+		f.write("PRECISION RESULTS\n")
+		settings = list(setting2exidx2precision.keys())
+		for setting in settings:
+			f.write(str(round(np.mean(setting2exidx2precision[setting]) * 100, 1)) + "\n")  
