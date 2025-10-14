@@ -1,0 +1,21 @@
+{
+  "settings": {
+    "simqg_model": "gpt-4.1-mini",
+    "top_p": 1.0,
+    "simqa_model": "gpt-4.1-mini",
+    "with_context": true,
+    "taskqa_models": [
+      "deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free"
+    ],
+    "taskqa_explanation_types": [
+      "detailed"
+    ]
+  },
+  "unknown_count": 0,
+  "unknown_set": [],
+  "precision_results": {
+    "deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free": {
+      "detailed": 50.0
+    }
+  }
+}

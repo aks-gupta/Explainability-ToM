@@ -53,7 +53,7 @@ def create_folder(parent_directory, new_folder_name):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def create_folder_based_on_version(folder_path="versioned_output"):
+def create_folder_based_on_version(folder_path="outputs/versioned_output"):
     last_version = list_files_in_folder(folder_path)
     if last_version is None or last_version == 0:
         file_name = 'v1'
@@ -64,7 +64,7 @@ def create_folder_based_on_version(folder_path="versioned_output"):
     create_folder(folder_path, file_name)
     return os.path.join(folder_path, file_name)
 
-def return_last_max_version(folder_path="versioned_output"):
+def return_last_max_version(folder_path="outputs/versioned_output"):
     last_version = list_files_in_folder(folder_path)
     file_name = f'v{last_version}' #switch to a targeted version, else= "f'v17'"
     return os.path.join(folder_path, file_name)

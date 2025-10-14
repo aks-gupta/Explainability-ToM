@@ -1,5 +1,5 @@
 GENERAL_CONFIGS = {
-    'num_examples': 1,
+    'num_examples': 2,
     'num_disagreement_qs': 500,
     'k_shot': 3, #0->1, 1->2, 3->3, 5->4
     'counterfactuals': 'LABEL_BALANCED', #HARDCODED/GENERATED/LABEL_BALANCED
@@ -12,10 +12,10 @@ GENERAL_CONFIGS = {
 }
 
 MODEL_CONFIGS = {
-    'taskqa_model': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free', #['meta-llama/Llama-3.3-70B-Instruct-Turbo-Free', 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free', 'gpt-4.1-mini', 'o1-mini-2024-09-12'],
-    'taskqa_expl_type': 'detailed', #'concise', 'detailed', 'toxic', 'nontoxic'
-    'simqg_model': 'gpt-4.1-mini', #['o1-mini-2024-09-12'],
-    'simqa_model': 'gpt-4.1-mini' #['o1-mini-2024-09-12']
+    'taskqa_model': ['deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free'], #['meta-llama/Llama-3.3-70B-Instruct-Turbo-Free', 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free', 'gpt-4.1-mini', 'o1-mini-2024-09-12'],
+    'taskqa_expl_type': ['detailed'], #'concise', 'detailed', 'toxic', 'nontoxic'
+    'simqg_model': ['gpt-4.1-mini'], #['o1-mini-2024-09-12'],
+    'simqa_model': ['gpt-4.1-mini'] #['o1-mini-2024-09-12']
 }
 
 # Dataset and domain settings

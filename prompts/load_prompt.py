@@ -1,5 +1,11 @@
 import json
 import os
+# import from previous directory
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+import configs
+
+domain = configs.DOMAIN
 
 def _embed_prompt(
     instruction, template_with_label, template_no_label, dem_examples, test_example
@@ -13,7 +19,7 @@ def _embed_prompt(
 
 
 def get_prompts_by_task(task, test_examples, k_shot=3):
-    prompt = json.load(open(os.path.join(os.path.dirname(__file__), 'prompts.json')))[task]
+    prompt = json.load(open(os.path.join(os.path.dirname(__file__), f'prompts_{domain}.json')))[task]
     final_prompt = [_embed_prompt(prompt['instruction'], prompt['template_with_label'],
                         prompt['template_no_label'], prompt['dem_examples'][:k_shot], test_example)
             for test_example in test_examples]
