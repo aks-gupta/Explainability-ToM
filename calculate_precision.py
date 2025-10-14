@@ -1,3 +1,4 @@
+import json
 import sys
 from collections import Counter
 from copy import deepcopy
@@ -39,7 +40,9 @@ def calculate_precision():
 						pred_ans = simans['pred_ans']
 						simans_count[count] = [str(pred_ans)]
 						count+=1
-				print(simans_count)
+				#write to json file
+				with open(f'{full_path}/simans_count.json', 'w') as f:
+					json.dump(simans_count, f)
 
 				step_4_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_4_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model.split('/')[0]}_taskqa_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
 				print(step_4_out)
@@ -54,9 +57,10 @@ def calculate_precision():
 						pred_ans = taskans['pred_ans']
 						taskans_count[count] = [str(pred_ans)]
 						count+=1
-				print(taskans_count)
+				#write to json file
+				with open(f'{full_path}/taskans_count.json', 'w') as f:
+					json.dump(taskans_count, f)
 
-				
 				ex_simulatable_count, ex_correct_simul_count = 0, 0
 				unknown_count = 0
 				unknown_set = set()
