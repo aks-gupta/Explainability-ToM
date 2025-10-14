@@ -97,11 +97,9 @@ def calculate_precision(taskqa_model, taskqa_expl_type):
 			"unknown_count": unknown_count,
 			"unknown_set": list(unknown_set),
 			"precision_results": {
-				model: {
-					expl_type: round(np.mean(setting2exidx2precision.get((model, expl_type), 0)) * 100, 1)
-					for expl_type in MODEL_CONFIGS['taskqa_expl_type']
+				MODEL_CONFIGS['taskqa_model']: {
+					MODEL_CONFIGS['taskqa_expl_type']: round(np.mean(setting2exidx2precision.get((MODEL_CONFIGS['taskqa_model'], MODEL_CONFIGS['taskqa_expl_type']), 0)) * 100, 1)
 				}
-				for model in MODEL_CONFIGS['taskqa_model']
 			}
 		}
 		json.dump(results, f, indent=2)

@@ -11,7 +11,7 @@
   "unknown_set": [],
   "precision_results": {
     "deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free": {
-      "detailed": 50.0
+      "detailed": 80.0
     }
   }
 }
