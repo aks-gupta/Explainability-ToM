@@ -103,3 +103,6 @@ def calculate_precision(taskqa_model, taskqa_expl_type):
 			}
 		}
 		json.dump(results, f, indent=2)
+
+# if __name__ == "__main__":
+# 	calculate_precision(MODEL_CONFIGS['taskqa_model'], MODEL_CONFIGS['taskqa_expl_type'])

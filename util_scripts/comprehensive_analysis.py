@@ -1,0 +1,288 @@
+import os
+import pickle as pkl
+import json
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
+from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DOMAIN
+
+def load_pkl_data(filepath):
+    """Load pickle data with error handling"""
+    try:
+        with open(filepath, 'rb') as f:
+            return pkl.load(f)
+    except Exception as e:
+        print(f"Error loading {filepath}: {e}")
+        return None
+
+def load_original_questions():
+    """Load the original questions"""
+    try:
+        with open(f"../data/preprocessed/label_balanced_original_questions_{DOMAIN}.json", 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading original questions: {e}")
+        return None
+
+def load_counterfactuals():
+    """Load the counterfactual questions"""
+    try:
+        with open(f"../data/preprocessed/label_balanced_counterfactuals_{DOMAIN}.pkl", 'rb') as f:
+            return pkl.load(f)
+    except Exception as e:
+        print(f"Error loading counterfactuals: {e}")
+        return None
+
+def create_comprehensive_analysis(limit_examples):
+    """Create comprehensive analysis comparing cot, toxic, and nontoxic"""
+    
+    print("Loading data...")
+    
+    # Load original questions and counterfactuals
+    original_questions = load_original_questions()
+    counterfactuals = load_counterfactuals()
+    
+    if not original_questions or not counterfactuals:
+        print("Failed to load base data")
+        return
+    
+    # Load TaskQA data from all versions
+    versions = {
+        'v23': {'expl_type': 'cot', 'path': '../v23'},
+        'v24': {'expl_type': 'toxic', 'path': '../v24'}, 
+        'v26': {'expl_type': 'nontoxic', 'path': '../v26'}
+    }
+    
+    all_data = {}
+    
+    for version, info in versions.items():
+        print(f"Loading {version} ({info['expl_type']})...")
+        
+        # TaskQA file
+        taskqa_file = f"{info['path']}/hiring-decisions_task_qa_out_meta-llama_{info['expl_type']}_100.pkl"
+        taskqa_data = load_pkl_data(taskqa_file)
+        
+        # TaskQA on simulated inputs
+        taskqa_sim_file = f"{info['path']}/hiring-decisions_task_qa_simulation_questions_out_meta-llama_simqg_gpt-4.1-mini_taskqa_meta-llama_{info['expl_type']}_100.pkl"
+        taskqa_sim_data = load_pkl_data(taskqa_sim_file)
+        
+        # SimQA
+        simqa_file = f"{info['path']}/hiring-decisions_simulation_question_answers_out_meta-llama_simqg_gpt-4.1-mini_simqa_gpt-4.1-mini_{info['expl_type']}_100.pkl"
+        simqa_data = load_pkl_data(simqa_file)
+        
+        if taskqa_data and taskqa_sim_data and simqa_data:
+            all_data[version] = {
+                'expl_type': info['expl_type'],
+                'taskqa': taskqa_data,
+                'taskqa_sim': taskqa_sim_data,
+                'simqa': simqa_data
+            }
+        else:
+            print(f"  Failed to load data for {version}")
+    
+    print(f"Loaded data for {len(all_data)} versions")
+    
+    # Create comprehensive analysis
+    analysis_results = []
+    
+    # Process all examples
+    example_ids = list(counterfactuals.keys())[:limit_examples]
+    print(f"Analyzing {len(example_ids)} examples...")
+    
+    for example_id in example_ids:
+        # Get original question
+        original_q = original_questions[example_id]
+        original_question_text = original_q['question'] if isinstance(original_q, dict) else original_q
+        
+        # Get counterfactual questions
+        cf_data = counterfactuals[example_id]
+        cf_questions = cf_data['questions']
+        
+        example_analysis = {
+            'example_id': example_id,
+            'original_question': original_question_text,
+            'counterfactuals': []
+        }
+        
+        # Process each counterfactual question
+        for cf_idx, cf_question in enumerate(cf_questions):
+            cf_analysis = {
+                'cf_index': cf_idx,
+                'counterfactual_question': cf_question,
+                'cot': {},
+                'toxic': {},
+                'nontoxic': {}
+            }
+            
+            # For each version, get the relevant answers
+            for version, data in all_data.items():
+                expl_type = data['expl_type']
+                
+                # Get TaskQA answer for original question
+                original_taskqa = data['taskqa'].get(example_id, {})
+                
+                # Get TaskQA answer for this counterfactual
+                cf_taskqa_sim = data['taskqa_sim'].get(example_id, [])[cf_idx] if cf_idx < len(data['taskqa_sim'].get(example_id, [])) else {}
+                
+                # Get SimQA answer for this counterfactual  
+                cf_simqa = data['simqa'].get(example_id, [])[cf_idx] if cf_idx < len(data['simqa'].get(example_id, [])) else {}
+                
+                cf_analysis[expl_type] = {
+                    'original_taskqa_explanation': original_taskqa.get('pred_expl', ''),
+                    'original_taskqa_answer': original_taskqa.get('pred_ans', ''),
+                    'cf_taskqa_sim_explanation': cf_taskqa_sim.get('pred_expl', ''),
+                    'cf_taskqa_sim_answer': cf_taskqa_sim.get('pred_ans', ''),
+                    'cf_simqa_explanation': cf_simqa.get('pred_expl', ''),
+                    'cf_simqa_answer': cf_simqa.get('pred_ans', ''),
+                    'agree': cf_taskqa_sim.get('pred_ans', '') == cf_simqa.get('pred_ans', '')
+                }
+            
+            example_analysis['counterfactuals'].append(cf_analysis)
+        
+        analysis_results.append(example_analysis)
+    
+    # Save results
+    output_file = f"comprehensive_analysis_{limit_examples}_examples.json"
+    with open(output_file, 'w') as f:
+        json.dump(analysis_results, f, indent=2)
+    
+    print(f"Analysis complete! Results saved to: {output_file}")
+    
+    # Calculate comprehensive statistics
+    total_comparisons = 0
+    total_agreements = 0
+    agreement_by_type = {'cot': {'agreements': 0, 'total': 0}, 'toxic': {'agreements': 0, 'total': 0}, 'nontoxic': {'agreements': 0, 'total': 0}}
+    
+    # Answer distribution tracking
+    answer_counts = {
+        'cot': {'original_taskqa': {'yes': 0, 'no': 0, 'neither': 0}, 'taskqa_sim': {'yes': 0, 'no': 0, 'neither': 0}, 'simqa': {'yes': 0, 'no': 0, 'neither': 0}},
+        'toxic': {'original_taskqa': {'yes': 0, 'no': 0, 'neither': 0}, 'taskqa_sim': {'yes': 0, 'no': 0, 'neither': 0}, 'simqa': {'yes': 0, 'no': 0, 'neither': 0}},
+        'nontoxic': {'original_taskqa': {'yes': 0, 'no': 0, 'neither': 0}, 'taskqa_sim': {'yes': 0, 'no': 0, 'neither': 0}, 'simqa': {'yes': 0, 'no': 0, 'neither': 0}}
+    }
+    
+    # Disagreement pattern counts
+    disagreement_counts = {
+        'cot': {},
+        'toxic': {},
+        'nontoxic': {}
+    }
+    
+    # Cross-version answer consistency
+    cross_version_consistency = {
+        'original_taskqa_consistent': 0,
+        'taskqa_sim_consistent': 0,
+        'simqa_consistent': 0,
+        'total_cross_version_comparisons': 0
+    }
+    
+    for example in analysis_results:
+        for cf in example['counterfactuals']:
+            # Track cross-version consistency for this counterfactual
+            cf_original_answers = []
+            cf_taskqa_sim_answers = []
+            cf_simqa_answers = []
+            
+            for expl_type in ['cot', 'toxic', 'nontoxic']:
+                if expl_type in cf and cf[expl_type]:
+                    data = cf[expl_type]
+                    total_comparisons += 1
+                    agreement_by_type[expl_type]['total'] += 1
+                    
+                    # Track answer distributions
+                    orig_ans = data.get('original_taskqa_answer', 'neither')
+                    sim_ans = data.get('cf_taskqa_sim_answer', 'neither')
+                    qa_ans = data.get('cf_simqa_answer', 'neither')
+                    
+                    answer_counts[expl_type]['original_taskqa'][orig_ans] += 1
+                    answer_counts[expl_type]['taskqa_sim'][sim_ans] += 1
+                    answer_counts[expl_type]['simqa'][qa_ans] += 1
+                    
+                    # Track agreements
+                    if data.get('agree', False):
+                        total_agreements += 1
+                        agreement_by_type[expl_type]['agreements'] += 1
+                    else:
+                        # Count disagreement patterns
+                        pattern = f"TaskQA-sim={sim_ans}, SimQA={qa_ans}"
+                        disagreement_counts[expl_type][pattern] = disagreement_counts[expl_type].get(pattern, 0) + 1
+                    
+                    # Collect answers for cross-version analysis
+                    cf_original_answers.append(orig_ans)
+                    cf_taskqa_sim_answers.append(sim_ans)
+                    cf_simqa_answers.append(qa_ans)
+            
+            # Check cross-version consistency
+            if len(cf_original_answers) == 3:  # All three explanation types present
+                cross_version_consistency['total_cross_version_comparisons'] += 1
+                
+                if len(set(cf_original_answers)) == 1:  # All same
+                    cross_version_consistency['original_taskqa_consistent'] += 1
+                if len(set(cf_taskqa_sim_answers)) == 1:  # All same
+                    cross_version_consistency['taskqa_sim_consistent'] += 1
+                if len(set(cf_simqa_answers)) == 1:  # All same
+                    cross_version_consistency['simqa_consistent'] += 1
+    
+    # Print comprehensive summary
+    print(f"\n" + "="*80)
+    print(f"COMPREHENSIVE ANALYSIS SUMMARY")
+    print(f"="*80)
+    
+    print(f"\nBASIC AGREEMENT STATISTICS:")
+    print(f"Total comparisons: {total_comparisons}")
+    print(f"Overall agreement: {total_agreements}/{total_comparisons} ({total_agreements/total_comparisons*100:.1f}%)")
+    print(f"\nBy explanation type:")
+    for expl_type, stats in agreement_by_type.items():
+        if stats['total'] > 0:
+            percentage = stats['agreements']/stats['total']*100
+            print(f"  {expl_type}: {stats['agreements']}/{stats['total']} ({percentage:.1f}%)")
+    
+    print(f"\n" + "-"*60)
+    print(f"ANSWER DISTRIBUTION ANALYSIS:")
+    print(f"-"*60)
+    
+    for expl_type in ['cot', 'toxic', 'nontoxic']:
+        print(f"\n{expl_type.upper()}:")
+        print(f"  Original TaskQA: Yes={answer_counts[expl_type]['original_taskqa']['yes']}, No={answer_counts[expl_type]['original_taskqa']['no']}, Neither={answer_counts[expl_type]['original_taskqa']['neither']}")
+        print(f"  TaskQA-Sim:     Yes={answer_counts[expl_type]['taskqa_sim']['yes']}, No={answer_counts[expl_type]['taskqa_sim']['no']}, Neither={answer_counts[expl_type]['taskqa_sim']['neither']}")
+        print(f"  SimQA:          Yes={answer_counts[expl_type]['simqa']['yes']}, No={answer_counts[expl_type]['simqa']['no']}, Neither={answer_counts[expl_type]['simqa']['neither']}")
+    
+    print(f"\n" + "-"*60)
+    print(f"CROSS-VERSION CONSISTENCY:")
+    print(f"-"*60)
+    print(f"Total cross-version comparisons: {cross_version_consistency['total_cross_version_comparisons']}")
+    print(f"Original TaskQA consistent across versions: {cross_version_consistency['original_taskqa_consistent']}/{cross_version_consistency['total_cross_version_comparisons']} ({cross_version_consistency['original_taskqa_consistent']/cross_version_consistency['total_cross_version_comparisons']*100:.1f}%)")
+    print(f"TaskQA-Sim consistent across versions: {cross_version_consistency['taskqa_sim_consistent']}/{cross_version_consistency['total_cross_version_comparisons']} ({cross_version_consistency['taskqa_sim_consistent']/cross_version_consistency['total_cross_version_comparisons']*100:.1f}%)")
+    print(f"SimQA consistent across versions: {cross_version_consistency['simqa_consistent']}/{cross_version_consistency['total_cross_version_comparisons']} ({cross_version_consistency['simqa_consistent']/cross_version_consistency['total_cross_version_comparisons']*100:.1f}%)")
+    
+    print(f"\n" + "-"*60)
+    print(f"DISAGREEMENT ANALYSIS:")
+    print(f"-"*60)
+    for expl_type in ['cot', 'toxic', 'nontoxic']:
+        total_disagreements = sum(disagreement_counts[expl_type].values())
+        print(f"\n{expl_type.upper()} Disagreements ({total_disagreements} total):")
+        
+        for pattern, count in sorted(disagreement_counts[expl_type].items(), key=lambda x: x[1], reverse=True):
+            print(f"  {pattern}: {count} cases")
+    
+    # Save detailed statistics to file
+    stats_file = f"detailed_statistics_{limit_examples}_examples.json"
+    detailed_stats = {
+        'basic_stats': {
+            'total_comparisons': total_comparisons,
+            'total_agreements': total_agreements,
+            'overall_agreement_rate': total_agreements/total_comparisons*100 if total_comparisons > 0 else 0,
+            'agreement_by_type': {k: {'agreements': v['agreements'], 'total': v['total'], 'rate': v['agreements']/v['total']*100 if v['total'] > 0 else 0} for k, v in agreement_by_type.items()}
+        },
+        'answer_distributions': answer_counts,
+        'cross_version_consistency': cross_version_consistency,
+        'disagreement_patterns': disagreement_counts
+    }
+    
+    with open(stats_file, 'w') as f:
+        json.dump(detailed_stats, f, indent=2)
+    
+    print(f"\nDetailed statistics saved to: {stats_file}")
+    print(f"="*80)
+
+if __name__ == "__main__":
+    # Start with 5 examples for testing
+    create_comprehensive_analysis(limit_examples=100)
