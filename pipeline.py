@@ -11,6 +11,7 @@ from simulate_qa import simulate_qa_hiring_decisions
 from utilities import create_folder_based_on_version, preprocess_label_balanced_counterfactuals
 from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DATASET, DOMAIN, DATA_FILE
 from calculate_precision import calculate_precision
+from util_scripts.pkl_to_json import pkl_to_json
 
 
 def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
@@ -30,7 +31,10 @@ def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
     print(f"DEBUG Pipeline: Saved predictions for examples: {list(all_preds.keys())}")
     assert out_file.endswith('.pkl')
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
+    out_file_json = out_file.replace('.pkl', '.json')
     pkl.dump(all_preds, open(out_file, 'wb'))
+    pkl_to_json(out_file, out_file_json)
+    print(f"Results saved to {out_file} and {out_file_json}")
 
 def main():
     print("="*60)

@@ -8,19 +8,19 @@ GENERAL_CONFIGS = {
     'step_2_out': 'simulation_question_gen_out', 
     'step_3_out': 'simulation_question_answers_out',
     'step_4_out': 'task_qa_simulation_questions_out',
-    'use_existing_folder': True
+    'use_existing_folder': False
 }
 
 MODEL_CONFIGS = {
     'taskqa_model': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free', #['meta-llama/Llama-3.3-70B-Instruct-Turbo-Free', 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free', 'gpt-4.1-mini', 'o1-mini-2024-09-12'],
-    'taskqa_expl_type': 'detailed', #'concise', 'detailed', 'toxic', 'nontoxic'
+    'taskqa_expl_type': 'nontoxic', #'concise', 'detailed', 'toxic', 'nontoxic'
     'simqg_model': 'gpt-4.1-mini', #['o1-mini-2024-09-12'],
     'simqa_model': 'gpt-4.1-mini' #['o1-mini-2024-09-12']
 }
 
 # Dataset and domain settings
 DATASET = 'almanacs'
-DOMAIN = 'harmful-requests' # Options: 'hiring-decisions', 'sycophancy', 'harmful-requests'
+DOMAIN = 'hiring-decisions' # Options: 'hiring-decisions', 'sycophancy', 'harmful-requests'
 
 # Data file for this dataset/domain
 DATA_FILE = './data/hiring_decisions/almanacs_hiring_decisions_question.json'
