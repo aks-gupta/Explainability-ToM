@@ -1,7 +1,7 @@
 import json
 import sys
 import os
-from api_client import call_together_api, call_openai_api
+from api_client import call_together_api, call_openai_api, call_bedrock_api
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from prompts.load_prompt import get_prompts_by_task
@@ -23,10 +23,13 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
                                   [{'question': input['question']} for input in distinct_inputs])
     if ('o1-mini' in model) or ('gpt-4.1-mini' in model) or ('meta.llama3-1-8b-instruct-v1:0' in model) or ('llama3-2-11b-instruct' in model):
         pred_expls = call_openai_api(model=model, prompts=prompts,
-                                temperature=0, max_tokens=200, stop='\n\n')
+                                temperature=0, max_tokens=None, stop='\n\n')
     elif ('llama' in model) or ('deepseek' in model):
         pred_expls = call_together_api(model=model, prompts=prompts,
-                                temperature=0, max_tokens=200, stop='\n\n')
+                                temperature=0, max_tokens=None, stop='\n\n')
+    elif ('claude' in model) or ('mistral' in model):
+        pred_expls = call_bedrock_api(model=model, prompts=prompts, 
+                                      temperature=0, max_tokens=None, stop='\n\n')
     assert len(pred_expls) == len(prompts)
     if expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
         pred_answers = []

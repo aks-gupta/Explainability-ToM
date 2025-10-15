@@ -24,7 +24,7 @@ Would help to store the prompts and data.json for each dataset within the specif
     - Select ```num_examples``` in GENERAL_CONFIGS to choose how many datapoints to look at while creating counterfactuals (oversample to get a few good pairs)
     - Choose how ```counterfactuals``` are generated: "LABEL_BALANCED" and "HARDCODED" require running a script before running the pipeline.py 
     - Choose an appropriate model for ```simqg_model``` in MODEL_CONFIGS
-2. Export variables ```OPENAI_API_KEY``` and ```TOGETHER_API_KEY``` in the path
+2. Export variables ```OPENAI_API_KEY```, ```TOGETHER_API_KEY```, ```AWS_ACCESS_KEY_ID``` and ```AWS_SECRET_ACCESS_KEY``` in the path
 3. Skip to step 4 if the ```counterfactuals``` in Step 1 is of type "GENERATED". In this step run ``` python constant_counterfactuals_generation/hardcoded_counterfactuals_generation.py``` for hardcoded counterfactual generation and ``` python constant_counterfactuals_generation/label_balanced_counterfactuals_generation.py``` for label balanced counterfactual generation. Counterfactual questions are generated in data/ folder. 
 4. Note down the number of counterfactual questions generated from the logs and change the ```num_examples``` to a number lesser than the number in ```configs.py``` in GENERAL_CONFIGS
 5. Decide the models to use for the entire ```pipeline.py```
