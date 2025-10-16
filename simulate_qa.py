@@ -60,7 +60,7 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 			[
 				{
 					'orig_qn': orig_input['question'],
-					'orig_qa_tm_expl': orig_tm_pred['pred_expl'],
+					'orig_qa_tm_expl': extract_sim_qa_ans(orig_tm_pred['pred_expl']),
 					'sim_qn': sim_input
 				}
 				for orig_input, orig_tm_pred, sim_inputs in zip(orig_inputs, orig_tm_preds, sim_inputs_list)

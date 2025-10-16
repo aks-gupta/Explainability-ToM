@@ -71,6 +71,7 @@ def main():
     taskqa_expl_type = MODEL_CONFIGS['taskqa_expl_type']
     simqg_model = MODEL_CONFIGS['simqg_model']
     simqa_model = MODEL_CONFIGS['simqa_model']
+    simqa_explanation = MODEL_CONFIGS['simqa_expl_type']
 
     EX_IDXS = range(0, num_examples)
     
@@ -91,9 +92,6 @@ def main():
             test_inputs = json.load(f)
     else:
         test_inputs = json.load(open(DATA_FILE))['test']
-    # print(f"DEBUG Pipeline: Loaded {len(test_inputs)} test inputs")
-    # print(f"DEBUG Pipeline: Test inputs: {test_inputs[0]}")
-    # print(f"DEBUG Pipeline: Test inputs: {test_inputs[1]}")
     EX_IDXS = range(0, min(num_examples, len(test_inputs))) 
     step_1_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_1_out']}_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
     run_task_save_results(task_function=task_qa_hiring_decisions, out_file=step_1_out, ex_idxs=EX_IDXS,
@@ -134,7 +132,7 @@ def main():
     #     for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
     #     # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
     #         for simqg_model in MODEL_CONFIGS['simqg_model']: # expl
-    for explanation in ['withexpl']:
+    for explanation in simqa_explanation:
         for top_p in [1.0]:
             # for simqa_model in MODEL_CONFIGS['simqa_model']:
             print(f"Running SimQA: {simqa_model} with {taskqa_expl_type}")
