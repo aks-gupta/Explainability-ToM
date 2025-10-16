@@ -24,12 +24,12 @@ def calculate_precision(taskqa_model, taskqa_expl_type):
 	# 	for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
 		# for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
 	for explanation in ['withexpl']:
-		print("------" + str(taskqa_expl_type) + "--------")
+		# print("------" + str(taskqa_expl_type) + "--------")
 		setting = (taskqa_model, taskqa_expl_type)
 		setting2exidx2precision[setting] = {}
 
 		step_3_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_3_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model.split('/')[0]}_simqa_{simqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
-		print(step_3_out)
+		print(f"SIMQA FILE: {step_3_out}")
 		exidx2qns_simans = pkl.load(
 			open(step_3_out, 'rb'))
 
@@ -45,7 +45,7 @@ def calculate_precision(taskqa_model, taskqa_expl_type):
 			json.dump(simans_count, f)
 
 		step_4_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_4_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model.split('/')[0]}_taskqa_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
-		print(step_4_out)
+		print(f"TASKQA FILE: {step_4_out}")
 
 		exidx2qns_taskans = pkl.load(
 			open(step_4_out, 'rb'))
@@ -74,7 +74,7 @@ def calculate_precision(taskqa_model, taskqa_expl_type):
 			else:
 				unknown_count += 1
 				unknown_set.add(simqa_ann)
-		print(ex_correct_simul_count, ex_simulatable_count)
+		print(f"Correctly simulated: {ex_correct_simul_count}, Simulatable: {ex_simulatable_count}")
 		print("Unknown count:", unknown_count)
 		print("Unknown set:", unknown_set)
 		if ex_simulatable_count != 0:

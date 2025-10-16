@@ -11,5 +11,6 @@ __pycache__
 versioned_output
 log.txt
 tmp/
+outputs/
 /harmful_requests/
 !data/harmful_requests/
