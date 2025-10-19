@@ -132,7 +132,7 @@ def main():
     #     for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
     #     # for taskqa_expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
     #         for simqg_model in MODEL_CONFIGS['simqg_model']: # expl
-    for explanation in simqa_explanation:
+    for explanation in [simqa_explanation]:
         for top_p in [1.0]:
             # for simqa_model in MODEL_CONFIGS['simqa_model']:
             print(f"Running SimQA: {simqa_model} with {taskqa_expl_type}")
