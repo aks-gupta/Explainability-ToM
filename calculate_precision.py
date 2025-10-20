@@ -62,7 +62,8 @@ def calculate_precision(taskqa_model, taskqa_expl_type):
 			json.dump(taskans_count, f)
 
 		ex_simulatable_count, ex_correct_simul_count = 0, 0
-		unknown_count = 0
+		unknown_count_simqa = 0
+		unknown_count_taskqa = 0
 		unknown_set = set()
 		for exidx in range(count):
 			simqa_ann = simans_count[exidx][0]
@@ -72,10 +73,16 @@ def calculate_precision(taskqa_model, taskqa_expl_type):
 				if simqa_ann == taskqa_pred:
 					ex_correct_simul_count += 1
 			else:
-				unknown_count += 1
+				unknown_count_simqa += 1
 				unknown_set.add(simqa_ann)
+    
+			if taskqa_pred not in ['yes', 'no']:
+				unknown_count_taskqa += 1
+				unknown_set.add(taskqa_pred)
+    
 		print(f"Correctly simulated: {ex_correct_simul_count}, Simulatable: {ex_simulatable_count}")
-		print("Unknown count:", unknown_count)
+		print("Unknown count simqa:", unknown_count_simqa)
+		print("Unknown count taskqa:", unknown_count_taskqa)
 		print("Unknown set:", unknown_set)
 		if ex_simulatable_count != 0:
 			setting2exidx2precision[setting] =  ex_correct_simul_count / ex_simulatable_count
@@ -92,9 +99,11 @@ def calculate_precision(taskqa_model, taskqa_expl_type):
 				"simqa_model": simqa_model,
 				"with_context": with_context,
 				"taskqa_models": MODEL_CONFIGS['taskqa_model'],
-				"taskqa_explanation_types": MODEL_CONFIGS['taskqa_expl_type']
+				"taskqa_explanation_types": MODEL_CONFIGS['taskqa_expl_type'],
+				"simqa_explanation_types": MODEL_CONFIGS['simqa_expl_type']
 			},
-			"unknown_count": unknown_count,
+			"unknown_count_simqa": unknown_count_simqa,
+			"unknown_count_taskqa": unknown_count_taskqa,
 			"unknown_set": list(unknown_set),
 			"precision_results": {
 				MODEL_CONFIGS['taskqa_model']: {

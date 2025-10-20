@@ -35,10 +35,10 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
         pred_answers = []
         for i, pred_expl in enumerate(pred_expls):
             # print(f"DEBUG TaskQA Response {i}: {pred_expl}")
-            if pred_expl.endswith('So the answer is no.'):
+            if 'So the answer is no'.lower() in pred_expl.lower():
                 pred_answers.append('no')
                 # print(f"DEBUG TaskQA: Extracted 'no' from response {i}")
-            elif pred_expl.endswith('So the answer is yes.'):
+            elif 'So the answer is yes'.lower() in pred_expl.lower():
                 pred_answers.append('yes')
                 # print(f"DEBUG TaskQA: Extracted 'yes' from response {i}")
             else:
