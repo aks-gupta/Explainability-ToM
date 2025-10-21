@@ -1,0 +1,19 @@
+{
+  "settings": {
+    "simqg_model": "gpt-4.1-mini",
+    "top_p": 1.0,
+    "simqa_model": "gpt-4.1-mini",
+    "with_context": true,
+    "taskqa_models": "mistral.mistral-7b-instruct-v0:2",
+    "taskqa_explanation_types": "cot"
+  },
+  "unknown_count": 17,
+  "unknown_set": [
+    "neither"
+  ],
+  "precision_results": {
+    "mistral.mistral-7b-instruct-v0:2": {
+      "cot": 44.6
+    }
+  }
+}
