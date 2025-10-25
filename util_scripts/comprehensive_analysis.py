@@ -3,7 +3,29 @@ import pickle as pkl
 import json
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
-from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DOMAIN
+from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DOMAIN, DATASET
+
+# =============================================================================
+# CONFIGURATION - MODIFY THESE PARAMETERS AS NEEDED
+# =============================================================================
+
+# Output folder to analyze (e.g., "harmful-requests_meta-llama_200", "hiring-decisions_mistral.mistral-7b-instruct-v0:2_200")
+OUTPUT_FOLDER = "harmful-requests_meta-llama_200"
+
+# Version to explanation type mapping
+VERSION_MAPPING = {
+    'v1': 'cot',
+    'v2': 'toxic', 
+    'v3': 'nontoxic',
+    'v4': 'concise',
+    'v5': 'detailed',
+    'v6': 'noexpl',
+}
+
+# Number of examples to analyze
+LIMIT_EXAMPLES = 200
+
+# =============================================================================
 
 def load_pkl_data(filepath):
     """Load pickle data with error handling"""
@@ -32,10 +54,10 @@ def load_counterfactuals():
         print(f"Error loading counterfactuals: {e}")
         return None
 
-def create_comprehensive_analysis(limit_examples):
-    """Create comprehensive analysis comparing cot, toxic, and nontoxic"""
+def create_comprehensive_analysis(limit_examples, output_folder, version_mapping):
+    """Create comprehensive analysis comparing different explanation types"""
     
-    print("Loading data...")
+    print(f"Loading data from {output_folder}...")
     
     # Load original questions and counterfactuals
     original_questions = load_original_questions()
@@ -45,28 +67,32 @@ def create_comprehensive_analysis(limit_examples):
         print("Failed to load base data")
         return
     
-    # Load TaskQA data from all versions
-    versions = {
-        'v23': {'expl_type': 'cot', 'path': '../v23'},
-        'v24': {'expl_type': 'toxic', 'path': '../v24'}, 
-        'v26': {'expl_type': 'nontoxic', 'path': '../v26'}
-    }
+    # Build versions dictionary from configuration
+    versions = {}
+    for version, expl_type in version_mapping.items():
+        versions[version] = {
+            'expl_type': expl_type, 
+            'path': f'../outputs/{output_folder}/{version}'
+        }
     
     all_data = {}
     
     for version, info in versions.items():
         print(f"Loading {version} ({info['expl_type']})...")
         
+        # For file names, use 'cot' as default when expl_type is 'noexpl'
+        file_expl_type = 'cot' if info['expl_type'] == 'noexpl' else info['expl_type']
+        
         # TaskQA file
-        taskqa_file = f"{info['path']}/hiring-decisions_task_qa_out_meta-llama_{info['expl_type']}_100.pkl"
+        taskqa_file = f"{info['path']}/{DOMAIN}_task_qa_out_meta-llama_{file_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
         taskqa_data = load_pkl_data(taskqa_file)
         
         # TaskQA on simulated inputs
-        taskqa_sim_file = f"{info['path']}/hiring-decisions_task_qa_simulation_questions_out_meta-llama_simqg_gpt-4.1-mini_taskqa_meta-llama_{info['expl_type']}_100.pkl"
+        taskqa_sim_file = f"{info['path']}/{DOMAIN}_task_qa_simulation_questions_out_meta-llama_simqg_gpt-4.1-mini_taskqa_meta-llama_{file_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
         taskqa_sim_data = load_pkl_data(taskqa_sim_file)
         
         # SimQA
-        simqa_file = f"{info['path']}/hiring-decisions_simulation_question_answers_out_meta-llama_simqg_gpt-4.1-mini_simqa_gpt-4.1-mini_{info['expl_type']}_100.pkl"
+        simqa_file = f"{info['path']}/{DOMAIN}_simulation_question_answers_out_meta-llama_simqg_gpt-4.1-mini_simqa_gpt-4.1-mini_{file_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
         simqa_data = load_pkl_data(simqa_file)
         
         if taskqa_data and taskqa_sim_data and simqa_data:
@@ -108,9 +134,7 @@ def create_comprehensive_analysis(limit_examples):
             cf_analysis = {
                 'cf_index': cf_idx,
                 'counterfactual_question': cf_question,
-                'cot': {},
-                'toxic': {},
-                'nontoxic': {}
+                **{expl_type: {} for expl_type in version_mapping.values()} # Dynamically create keys
             }
             
             # For each version, get the relevant answers
@@ -140,31 +164,47 @@ def create_comprehensive_analysis(limit_examples):
         
         analysis_results.append(example_analysis)
     
-    # Save results
-    output_file = f"comprehensive_analysis_{limit_examples}_examples.json"
-    with open(output_file, 'w') as f:
-        json.dump(analysis_results, f, indent=2)
-    
-    print(f"Analysis complete! Results saved to: {output_file}")
+        # Create informative filename using output folder name
+        # Extract domain and model from output folder name (e.g., "harmful-requests_meta-llama_200")
+        folder_parts = output_folder.split('_')
+        if len(folder_parts) >= 2:
+            domain_name = folder_parts[0]
+            model_name = folder_parts[1].replace('.', '_')
+        else:
+            domain_name = DOMAIN
+            model_name = MODEL_CONFIGS['taskqa_model'].split('/')[-1].replace('.', '_')
+        
+        output_file = f"comprehensive_analysis_{domain_name}_{model_name}_{limit_examples}_examples.json"
+        
+        # Add metadata to the analysis results
+        analysis_with_metadata = {
+            'metadata': {
+                'dataset': DATASET,
+                'domain': domain_name,
+                'model': model_name,
+                'num_examples': limit_examples,
+                'output_folder': output_folder,
+                'version_mapping': version_mapping,
+                'analysis_timestamp': __import__('datetime').datetime.now().isoformat()
+            },
+            'analysis_results': analysis_results
+        }
+        
+        with open(output_file, 'w') as f:
+            json.dump(analysis_with_metadata, f, indent=2)
+        
+        print(f"Analysis complete! Results saved to: {output_file}")
     
     # Calculate comprehensive statistics
     total_comparisons = 0
     total_agreements = 0
-    agreement_by_type = {'cot': {'agreements': 0, 'total': 0}, 'toxic': {'agreements': 0, 'total': 0}, 'nontoxic': {'agreements': 0, 'total': 0}}
+    agreement_by_type = {expl_type: {'agreements': 0, 'total': 0} for expl_type in version_mapping.values()}
     
     # Answer distribution tracking
-    answer_counts = {
-        'cot': {'original_taskqa': {'yes': 0, 'no': 0, 'neither': 0}, 'taskqa_sim': {'yes': 0, 'no': 0, 'neither': 0}, 'simqa': {'yes': 0, 'no': 0, 'neither': 0}},
-        'toxic': {'original_taskqa': {'yes': 0, 'no': 0, 'neither': 0}, 'taskqa_sim': {'yes': 0, 'no': 0, 'neither': 0}, 'simqa': {'yes': 0, 'no': 0, 'neither': 0}},
-        'nontoxic': {'original_taskqa': {'yes': 0, 'no': 0, 'neither': 0}, 'taskqa_sim': {'yes': 0, 'no': 0, 'neither': 0}, 'simqa': {'yes': 0, 'no': 0, 'neither': 0}}
-    }
+    answer_counts = {expl_type: {'original_taskqa': {'yes': 0, 'no': 0, 'neither': 0}, 'taskqa_sim': {'yes': 0, 'no': 0, 'neither': 0}, 'simqa': {'yes': 0, 'no': 0, 'neither': 0}} for expl_type in version_mapping.values()}
     
     # Disagreement pattern counts
-    disagreement_counts = {
-        'cot': {},
-        'toxic': {},
-        'nontoxic': {}
-    }
+    disagreement_counts = {expl_type: {} for expl_type in version_mapping.values()}
     
     # Cross-version answer consistency
     cross_version_consistency = {
@@ -181,7 +221,7 @@ def create_comprehensive_analysis(limit_examples):
             cf_taskqa_sim_answers = []
             cf_simqa_answers = []
             
-            for expl_type in ['cot', 'toxic', 'nontoxic']:
+            for expl_type in version_mapping.values():
                 if expl_type in cf and cf[expl_type]:
                     data = cf[expl_type]
                     total_comparisons += 1
@@ -211,7 +251,7 @@ def create_comprehensive_analysis(limit_examples):
                     cf_simqa_answers.append(qa_ans)
             
             # Check cross-version consistency
-            if len(cf_original_answers) == 3:  # All three explanation types present
+            if len(cf_original_answers) == len(version_mapping):  # All explanation types present
                 cross_version_consistency['total_cross_version_comparisons'] += 1
                 
                 if len(set(cf_original_answers)) == 1:  # All same
@@ -239,7 +279,7 @@ def create_comprehensive_analysis(limit_examples):
     print(f"ANSWER DISTRIBUTION ANALYSIS:")
     print(f"-"*60)
     
-    for expl_type in ['cot', 'toxic', 'nontoxic']:
+    for expl_type in version_mapping.values():
         print(f"\n{expl_type.upper()}:")
         print(f"  Original TaskQA: Yes={answer_counts[expl_type]['original_taskqa']['yes']}, No={answer_counts[expl_type]['original_taskqa']['no']}, Neither={answer_counts[expl_type]['original_taskqa']['neither']}")
         print(f"  TaskQA-Sim:     Yes={answer_counts[expl_type]['taskqa_sim']['yes']}, No={answer_counts[expl_type]['taskqa_sim']['no']}, Neither={answer_counts[expl_type]['taskqa_sim']['neither']}")
@@ -256,33 +296,57 @@ def create_comprehensive_analysis(limit_examples):
     print(f"\n" + "-"*60)
     print(f"DISAGREEMENT ANALYSIS:")
     print(f"-"*60)
-    for expl_type in ['cot', 'toxic', 'nontoxic']:
+    for expl_type in version_mapping.values():
         total_disagreements = sum(disagreement_counts[expl_type].values())
         print(f"\n{expl_type.upper()} Disagreements ({total_disagreements} total):")
         
         for pattern, count in sorted(disagreement_counts[expl_type].items(), key=lambda x: x[1], reverse=True):
             print(f"  {pattern}: {count} cases")
     
-    # Save detailed statistics to file
-    stats_file = f"detailed_statistics_{limit_examples}_examples.json"
-    detailed_stats = {
-        'basic_stats': {
-            'total_comparisons': total_comparisons,
-            'total_agreements': total_agreements,
-            'overall_agreement_rate': total_agreements/total_comparisons*100 if total_comparisons > 0 else 0,
-            'agreement_by_type': {k: {'agreements': v['agreements'], 'total': v['total'], 'rate': v['agreements']/v['total']*100 if v['total'] > 0 else 0} for k, v in agreement_by_type.items()}
-        },
-        'answer_distributions': answer_counts,
-        'cross_version_consistency': cross_version_consistency,
-        'disagreement_patterns': disagreement_counts
-    }
-    
-    with open(stats_file, 'w') as f:
-        json.dump(detailed_stats, f, indent=2)
+        # Save detailed statistics to file using output folder name
+        # Extract domain and model from output folder name (e.g., "harmful-requests_meta-llama_200")
+        folder_parts = output_folder.split('_')
+        if len(folder_parts) >= 2:
+            domain_name = folder_parts[0]
+            model_name = folder_parts[1].replace('.', '_')
+        else:
+            domain_name = DOMAIN
+            model_name = MODEL_CONFIGS['taskqa_model'].split('/')[-1].replace('.', '_')
+        
+        stats_file = f"detailed_statistics_{domain_name}_{model_name}_{limit_examples}_examples.json"
+        
+        detailed_stats = {
+            'metadata': {
+                'dataset': DATASET,
+                'domain': domain_name,
+                'model': model_name,
+                'full_model_name': MODEL_CONFIGS['taskqa_model'],
+                'num_examples': limit_examples,
+                'output_folder': output_folder,
+                'version_mapping': version_mapping,
+                'analysis_timestamp': __import__('datetime').datetime.now().isoformat()
+            },
+            'basic_stats': {
+                'total_comparisons': total_comparisons,
+                'total_agreements': total_agreements,
+                'overall_agreement_rate': total_agreements/total_comparisons*100 if total_comparisons > 0 else 0,
+                'agreement_by_type': {k: {'agreements': v['agreements'], 'total': v['total'], 'rate': v['agreements']/v['total']*100 if v['total'] > 0 else 0} for k, v in agreement_by_type.items()}
+            },
+            'answer_distributions': answer_counts,
+            'cross_version_consistency': cross_version_consistency,
+            'disagreement_patterns': disagreement_counts
+        }
+        
+        with open(stats_file, 'w') as f:
+            json.dump(detailed_stats, f, indent=2)
     
     print(f"\nDetailed statistics saved to: {stats_file}")
     print(f"="*80)
 
 if __name__ == "__main__":
-    # Start with 5 examples for testing
-    create_comprehensive_analysis(limit_examples=100)
+    # Use the configuration parameters defined at the top
+    create_comprehensive_analysis(
+        limit_examples=LIMIT_EXAMPLES,
+        output_folder=OUTPUT_FOLDER,
+        version_mapping=VERSION_MAPPING
+    )
