@@ -10,7 +10,7 @@ from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DOMAIN, DATASET
 # =============================================================================
 
 # Output folder to analyze (e.g., "harmful-requests_meta-llama_200", "hiring-decisions_mistral.mistral-7b-instruct-v0:2_200")
-OUTPUT_FOLDER = "harmful-requests_meta-llama_200"
+OUTPUT_FOLDER = "harmful-requests_mistral.mistral-7b-instruct-v0:2_200"
 
 # Version to explanation type mapping
 VERSION_MAPPING = {
@@ -83,16 +83,23 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
         # For file names, use 'cot' as default when expl_type is 'noexpl'
         file_expl_type = 'cot' if info['expl_type'] == 'noexpl' else info['expl_type']
         
+        # Extract model name from output folder for file paths
+        folder_parts = output_folder.split('_')
+        if len(folder_parts) >= 2:
+            model_name_for_files = folder_parts[1]  # e.g., "mistral.mistral-7b-instruct-v0:2"
+        else:
+            model_name_for_files = "meta-llama"  # fallback
+        
         # TaskQA file
-        taskqa_file = f"{info['path']}/{DOMAIN}_task_qa_out_meta-llama_{file_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
+        taskqa_file = f"{info['path']}/{DOMAIN}_task_qa_out_{model_name_for_files}_{file_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
         taskqa_data = load_pkl_data(taskqa_file)
         
         # TaskQA on simulated inputs
-        taskqa_sim_file = f"{info['path']}/{DOMAIN}_task_qa_simulation_questions_out_meta-llama_simqg_gpt-4.1-mini_taskqa_meta-llama_{file_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
+        taskqa_sim_file = f"{info['path']}/{DOMAIN}_task_qa_simulation_questions_out_{model_name_for_files}_simqg_gpt-4.1-mini_taskqa_{model_name_for_files}_{file_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
         taskqa_sim_data = load_pkl_data(taskqa_sim_file)
         
         # SimQA
-        simqa_file = f"{info['path']}/{DOMAIN}_simulation_question_answers_out_meta-llama_simqg_gpt-4.1-mini_simqa_gpt-4.1-mini_{file_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
+        simqa_file = f"{info['path']}/{DOMAIN}_simulation_question_answers_out_{model_name_for_files}_simqg_gpt-4.1-mini_simqa_gpt-4.1-mini_{file_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
         simqa_data = load_pkl_data(simqa_file)
         
         if taskqa_data and taskqa_sim_data and simqa_data:
@@ -268,12 +275,17 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
     
     print(f"\nBASIC AGREEMENT STATISTICS:")
     print(f"Total comparisons: {total_comparisons}")
-    print(f"Overall agreement: {total_agreements}/{total_comparisons} ({total_agreements/total_comparisons*100:.1f}%)")
+    if total_comparisons > 0:
+        print(f"Overall agreement: {total_agreements}/{total_comparisons} ({total_agreements/total_comparisons*100:.1f}%)")
+    else:
+        print("Overall agreement: No data available (0 comparisons)")
     print(f"\nBy explanation type:")
     for expl_type, stats in agreement_by_type.items():
         if stats['total'] > 0:
             percentage = stats['agreements']/stats['total']*100
             print(f"  {expl_type}: {stats['agreements']}/{stats['total']} ({percentage:.1f}%)")
+        else:
+            print(f"  {expl_type}: No data available")
     
     print(f"\n" + "-"*60)
     print(f"ANSWER DISTRIBUTION ANALYSIS:")
@@ -289,9 +301,13 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
     print(f"CROSS-VERSION CONSISTENCY:")
     print(f"-"*60)
     print(f"Total cross-version comparisons: {cross_version_consistency['total_cross_version_comparisons']}")
-    print(f"Original TaskQA consistent across versions: {cross_version_consistency['original_taskqa_consistent']}/{cross_version_consistency['total_cross_version_comparisons']} ({cross_version_consistency['original_taskqa_consistent']/cross_version_consistency['total_cross_version_comparisons']*100:.1f}%)")
-    print(f"TaskQA-Sim consistent across versions: {cross_version_consistency['taskqa_sim_consistent']}/{cross_version_consistency['total_cross_version_comparisons']} ({cross_version_consistency['taskqa_sim_consistent']/cross_version_consistency['total_cross_version_comparisons']*100:.1f}%)")
-    print(f"SimQA consistent across versions: {cross_version_consistency['simqa_consistent']}/{cross_version_consistency['total_cross_version_comparisons']} ({cross_version_consistency['simqa_consistent']/cross_version_consistency['total_cross_version_comparisons']*100:.1f}%)")
+    total_cross = cross_version_consistency['total_cross_version_comparisons']
+    if total_cross > 0:
+        print(f"Original TaskQA consistent across versions: {cross_version_consistency['original_taskqa_consistent']}/{total_cross} ({cross_version_consistency['original_taskqa_consistent']/total_cross*100:.1f}%)")
+        print(f"TaskQA-Sim consistent across versions: {cross_version_consistency['taskqa_sim_consistent']}/{total_cross} ({cross_version_consistency['taskqa_sim_consistent']/total_cross*100:.1f}%)")
+        print(f"SimQA consistent across versions: {cross_version_consistency['simqa_consistent']}/{total_cross} ({cross_version_consistency['simqa_consistent']/total_cross*100:.1f}%)")
+    else:
+        print("No cross-version comparisons available")
     
     print(f"\n" + "-"*60)
     print(f"DISAGREEMENT ANALYSIS:")
