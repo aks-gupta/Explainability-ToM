@@ -8,15 +8,15 @@ GENERAL_CONFIGS = {
     'step_2_out': 'simulation_question_gen_out', 
     'step_3_out': 'simulation_question_answers_out',
     'step_4_out': 'task_qa_simulation_questions_out',
-    'use_existing_folder': False # set to True to use existing folder and False to create new folder in versioned manner
+    'use_existing_folder': True # set to True to use existing folder and False to create new folder in versioned manner
 }
 
 MODEL_CONFIGS = {
-    'taskqa_model': 'anthropic.claude-3-sonnet-20240229-v1:0', #['mistral.mistral-7b-instruct-v0:2', 'anthropic.claude-3-sonnet-20240229-v1:0', 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free', 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free', 'gpt-4.1-mini', 'o1-mini-2024-09-12'],
-    'taskqa_expl_type': 'cot', #'concise', 'detailed', 'toxic', 'nontoxic'
+    'taskqa_model': 'mistral.mistral-7b-instruct-v0:2', #['mistral.mistral-7b-instruct-v0:2', 'anthropic.claude-3-sonnet-20240229-v1:0', 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free', 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free', 'gpt-4.1-mini', 'o1-mini-2024-09-12'],
+    'taskqa_expl_type': 'cot', #'cot', 'concise', 'detailed', 'toxic', 'nontoxic'
     'simqg_model': 'gpt-4.1-mini', #['o1-mini-2024-09-12'],
     'simqa_model': 'gpt-4.1-mini', #['o1-mini-2024-09-12']
-    'simqa_expl_type': 'withexpl' #['withoutexpl', 'withexpl']
+    'simqa_expl_type': 'withoutexpl' #['withoutexpl', 'withexpl']
 }
 
 # Dataset and domain settings
