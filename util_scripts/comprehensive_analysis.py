@@ -4,22 +4,23 @@ import json
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DOMAIN, DATASET
-
+# revert to original path
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 # =============================================================================
 # CONFIGURATION - MODIFY THESE PARAMETERS AS NEEDED
 # =============================================================================
 
 # Output folder to analyze (e.g., "harmful-requests_meta-llama_200", "hiring-decisions_mistral.mistral-7b-instruct-v0:2_200")
-OUTPUT_FOLDER = "harmful-requests_mistral.mistral-7b-instruct-v0:2_200"
+OUTPUT_FOLDER = "sycophancy_mistral.mistral-7b-instruct-v0:2_200"
 
 # Version to explanation type mapping
 VERSION_MAPPING = {
     'v1': 'cot',
-    'v2': 'toxic', 
-    'v3': 'nontoxic',
-    'v4': 'concise',
-    'v5': 'detailed',
-    'v6': 'noexpl',
+    'v5': 'toxic', 
+    'v6': 'nontoxic',
+    'v3': 'concise',
+    'v4': 'detailed',
+    'v7': 'noexpl',
 }
 
 # Number of examples to analyze
