@@ -71,6 +71,7 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 
 	# deduplicate the prompts before calling the API to save time
 	deduplicated_prompts = list(set(prompts))
+	# print(f"\n\033[1m\033[94mProcessing Prompts: \033[0m {deduplicated_prompts}")
 	if ('o1-mini' in model) or ('gpt-4.1-mini' in model):
 		pred_expls = call_openai_api(model=model, prompts=deduplicated_prompts,
 								bsz=16, num_processes=8,
@@ -84,7 +85,9 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 	prompt2pred_expl = {prompt: pred_expl for prompt, pred_expl in zip(deduplicated_prompts, pred_expls)}
 	pred_expls = [prompt2pred_expl[prompt] for prompt in prompts]
 	assert len(pred_expls) == len(prompts)
-
+	for i, (prompt, pred_expl) in enumerate(zip(prompts, pred_expls)):
+		print(f"\n\033[1m\033[94mCounterfactual Prompt {i}: \033[0m{prompt}\n\n\033[1m\033[94mPredicted Explanation:\033[0m {pred_expl}\n")
+	
 	# extract answers
 	preds = []
 	# print(f"DEBUG SimQA: Processing {len(pred_expls)} responses")
@@ -93,6 +96,7 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 		extracted_ans = extract_sim_qa_ans(pred_expl)
 		preds.append({'pred_ans': extracted_ans, 'pred_expl': pred_expl})
 		# print(f"DEBUG SimQA: Final answer for response {i}: {extracted_ans}")
+	print(f"\n\033[1m\033[94mFinal Example-wise Predictions:\033[0m {preds}\n")
 
 	# regroup preds according to examples (multiple simulation questions correspond to each original question)
 	assert len(preds) == len(prompts)

@@ -28,13 +28,13 @@ def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
     preds = task_function(**kwargs)
     for pos, ex_idx in enumerate(ex_idxs):
         all_preds[ex_idx] = preds[pos]
-    print(f"DEBUG Pipeline: Saved predictions for examples: {list(all_preds.keys())}")
+    # print(f"DEBUG Pipeline: Saved predictions for examples: {list(all_preds.keys())}")
     assert out_file.endswith('.pkl')
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
     out_file_json = out_file.replace('.pkl', '.json')
     pkl.dump(all_preds, open(out_file, 'wb'))
     pkl_to_json(out_file, out_file_json)
-    print(f"Results saved to {out_file} and {out_file_json}")
+    print(f"\n\033[1m\033[94mResults saved to: \033[0m {out_file} \033[1m\033[94mand\033[0m {out_file_json}")
 
 def main():
     print("="*60)
@@ -96,7 +96,7 @@ def main():
     step_1_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_1_out']}_{taskqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
     run_task_save_results(task_function=task_qa_hiring_decisions, out_file=step_1_out, ex_idxs=EX_IDXS,
                             model=taskqa_model, expl_type=taskqa_expl_type, inputs=test_inputs)
-    print(f"TaskQA completed: {os.path.basename(step_1_out)}")
+    print(f"\nTaskQA completed: {os.path.basename(step_1_out)}")
 
     # STEP 2: SimQG
     print("\n" + "="*60)
@@ -122,7 +122,7 @@ def main():
                     run_task_save_results(task_function=simulate_qg_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_2_out,
                                             model=simqg_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
                                             top_p=top_p, num_samples=num_counterfactual_qs, with_context=explanation)
-                    print(f"SimQG completed: {os.path.basename(step_2_out)}")
+                    print(f"\nSimQG completed: {os.path.basename(step_2_out)}")
     
     # STEP 3: SimQA
     print("\n" + "="*60)
@@ -147,7 +147,7 @@ def main():
             run_task_save_results(task_function=simulate_qa_hiring_decisions, ex_idxs=EX_IDXS, out_file=step_3_out,
                                 model=simqa_model, orig_inputs=orig_inputs, orig_tm_preds=orig_tm_preds,
                                 sim_inputs_list=sim_inputs_list,  include_expl=explanation=='withexpl')
-            print(f"SimQA completed: {os.path.basename(step_3_out)}")
+            print(f"\nSimQA completed: {os.path.basename(step_3_out)}")
 
     # STEP 4: TaskQA on SimInputs
     print("\n" + "="*60)
@@ -165,7 +165,7 @@ def main():
             # all_sim_inputs = [{'question': input} for sim_inputs in sim_inputs_list for input in sim_inputs['questions']]
             run_task_save_results(task_function=task_qa_hiring_decisions_sim_inputs_list, ex_idxs=EX_IDXS, out_file=step_4_out,
                                     model=taskqa_model, expl_type=taskqa_expl_type, sim_inputs_list=sim_inputs_list)
-            print(f"TaskQA on SimInputs completed: {os.path.basename(step_4_out)}")
+            print(f"\nTaskQA on SimInputs completed: {os.path.basename(step_4_out)}")
     
     # Pipeline Completion
     print("\n" + "="*60)

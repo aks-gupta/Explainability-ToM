@@ -83,7 +83,7 @@ def calculate_precision(taskqa_model, taskqa_expl_type):
 		print(f"Correctly simulated: {ex_correct_simul_count}, Simulatable: {ex_simulatable_count}")
 		print("Unknown count simqa:", unknown_count_simqa)
 		print("Unknown count taskqa:", unknown_count_taskqa)
-		print("Unknown set:", unknown_set)
+		# print("Unknown set:", unknown_set)
 		if ex_simulatable_count != 0:
 			setting2exidx2precision[setting] =  ex_correct_simul_count / ex_simulatable_count
 

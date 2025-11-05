@@ -12,6 +12,7 @@ from configs import DATASET, DOMAIN, DATA_FILE
 def task_qa_hiring_decisions(model, expl_type, inputs):
     # print(model)
     # print(expl_type)
+    print(f"Running TaskQA with model: {model}, explanation type: {expl_type} on {len(inputs)} inputs.")
     distinct_qns = []
     for input in inputs:
         if 'question' in input:
@@ -19,8 +20,10 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
         else:
             distinct_qns.append(input)
     distinct_inputs = [{'question': question} for question in distinct_qns]
+    print(f"\n\033[1m\033[94mQuestions to process:\033[0m {distinct_inputs}")
     prompts = get_prompts_by_task(f'{DATASET}-{DOMAIN}-taskqa-{expl_type}',
                                   [{'question': input['question']} for input in distinct_inputs])
+    # print(f"Prompts for TaskQA: {prompts}")
     if ('o1-mini' in model) or ('gpt-4.1-mini' in model) or ('meta.llama3-1-8b-instruct-v1:0' in model) or ('llama3-2-11b-instruct' in model):
         pred_expls = call_openai_api(model=model, prompts=prompts,
                                 temperature=0, max_tokens=None, stop='\n\n')
@@ -31,6 +34,9 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
         pred_expls = call_bedrock_api(model=model, prompts=prompts, 
                                       temperature=0, max_tokens=None, stop='\n\n')
     assert len(pred_expls) == len(prompts)
+    prints = [f"\n\033[1m\033[94mInput Prompt {i}:\033[0m {prompt}\n\033[1m\033[94m\nPredicted Explanation:\033[0m {pred_expl}\n" for i, (prompt, pred_expl) in enumerate(zip(prompts, pred_expls))]
+    for p in prints:
+        print(p)
     if expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
         pred_answers = []
         for i, pred_expl in enumerate(pred_expls):
@@ -57,6 +63,7 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
             preds.append(qn2pred[input['question']])
         else:
             preds.append(qn2pred[input])
+    print(f"\n\033[1m\033[94mFinal Predictions:\033[0m {preds}")
     return preds
 
 def task_qa_hiring_decisions_sim_inputs_list(model, expl_type, sim_inputs_list):

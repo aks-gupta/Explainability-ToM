@@ -1,5 +1,5 @@
 GENERAL_CONFIGS = {
-    'num_examples': 10,
+    'num_examples': 1,
     'num_disagreement_qs': 500,
     'k_shot': 3, #0->1, 1->2, 3->3, 5->4
     'counterfactuals': 'LABEL_BALANCED', #HARDCODED/GENERATED/LABEL_BALANCED
@@ -8,7 +8,7 @@ GENERAL_CONFIGS = {
     'step_2_out': 'simulation_question_gen_out', 
     'step_3_out': 'simulation_question_answers_out',
     'step_4_out': 'task_qa_simulation_questions_out',
-    'use_existing_folder': True # set to True to use existing folder and False to create new folder in versioned manner
+    'use_existing_folder': False # set to True to use existing folder and False to create new folder in versioned manner
 }
 
 MODEL_CONFIGS = {
