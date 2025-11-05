@@ -10,6 +10,8 @@ import time
 import re
 import os
 
+print_debug = GENERAL_CONFIGS.get('print_debug', False)
+
 def extract_sim_qa_ans(sim_qa_expl):
 	# print(f"DEBUG SimQA: Processing response: {sim_qa_expl}")
 	cannot_guess = 'I cannot guess' in sim_qa_expl
@@ -86,7 +88,8 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 	pred_expls = [prompt2pred_expl[prompt] for prompt in prompts]
 	assert len(pred_expls) == len(prompts)
 	for i, (prompt, pred_expl) in enumerate(zip(prompts, pred_expls)):
-		print(f"\n\033[1m\033[94mCounterfactual Prompt {i}: \033[0m{prompt}\n\n\033[1m\033[94mPredicted Explanation:\033[0m {pred_expl}\n")
+		if print_debug:
+			print(f"\n\033[1m\033[94mSimQA Input Prompt {i}:\033[0m {prompt}\n\n\033[1m\033[94m\nPredicted Explanation:\033[0m {pred_expl}\n")
 	
 	# extract answers
 	preds = []
@@ -96,7 +99,7 @@ def simulate_qa_hiring_decisions(model, orig_inputs, orig_tm_preds, sim_inputs_l
 		extracted_ans = extract_sim_qa_ans(pred_expl)
 		preds.append({'pred_ans': extracted_ans, 'pred_expl': pred_expl})
 		# print(f"DEBUG SimQA: Final answer for response {i}: {extracted_ans}")
-	print(f"\n\033[1m\033[94mFinal Example-wise Predictions:\033[0m {preds}\n")
+	if print_debug: print(f"\n\033[1m\033[94mFinal Example-wise Predictions:\033[0m {preds}\n")
 
 	# regroup preds according to examples (multiple simulation questions correspond to each original question)
 	assert len(preds) == len(prompts)
