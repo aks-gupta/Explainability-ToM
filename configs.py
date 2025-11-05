@@ -1,5 +1,5 @@
 GENERAL_CONFIGS = {
-    'num_examples': 200,
+    'num_examples': 10,
     'num_disagreement_qs': 500,
     'k_shot': 3, #0->1, 1->2, 3->3, 5->4
     'counterfactuals': 'LABEL_BALANCED', #HARDCODED/GENERATED/LABEL_BALANCED
@@ -12,7 +12,7 @@ GENERAL_CONFIGS = {
 }
 
 MODEL_CONFIGS = {
-    'taskqa_model': 'anthropic.claude-3-sonnet-20240229-v1:0', #['mistral.mistral-7b-instruct-v0:2', 'anthropic.claude-3-sonnet-20240229-v1:0', 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free', 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free', 'gpt-4.1-mini', 'o1-mini-2024-09-12'],
+    'taskqa_model': 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free', #['mistral.mistral-7b-instruct-v0:2', 'anthropic.claude-3-sonnet-20240229-v1:0', 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free', 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free', 'gpt-4.1-mini', 'o1-mini-2024-09-12'],
     'taskqa_expl_type': 'cot', #'concise', 'detailed', 'toxic', 'nontoxic'
     'simqg_model': 'gpt-4.1-mini', #['o1-mini-2024-09-12'],
     'simqa_model': 'gpt-4.1-mini', #['o1-mini-2024-09-12']
