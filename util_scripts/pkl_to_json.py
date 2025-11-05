@@ -10,7 +10,7 @@ def pkl_to_json(pkl_file, json_file):
         data = pkl.load(open(pkl_file, 'rb'))
         with open(json_file, 'w') as f:
             json.dump(data, f, indent=4)
-        print(f"Converted {pkl_file} to {json_file}")
+        # print(f"Converted {pkl_file} to {json_file}")
     else:
         print(f"{pkl_file} does not exist")
 
