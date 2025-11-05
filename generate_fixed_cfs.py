@@ -16,6 +16,8 @@ num_examples = configs.GENERAL_CONFIGS['num_examples']
 num_counterfactual_qs = configs.GENERAL_CONFIGS['num_counterfactual_qs']
 with_context = False
 simqg_model = configs.MODEL_CONFIGS['simqg_model']
+print(f"DEBUG: num_counterfactual_qs = {num_counterfactual_qs}")
+print(f"DEBUG: simqg_model = {simqg_model}")
 
 def get_data():
 	data = json.load(open(f'./data/dataset/data_{domain}.json'))['test']
@@ -57,6 +59,8 @@ def simulate_qg(model, orig_inputs, orig_tm_preds, top_p, num_samples, with_cont
 		responses = call_openai_api(model=model, prompts=prompts, temperature=1, top_p=top_p, stop=None)
 	elif ('llama' in model):
 		responses = call_together_api(model=model, prompts=prompts, temperature=1, top_p=top_p, stop='\n\n')
+	else:
+		raise ValueError(f"Unsupported model: {model}")
 
 	sim_inputs = []
 	sim_answers = []
@@ -167,7 +171,7 @@ if __name__ == "__main__":
 	except FileNotFoundError:
 		print(f"No existing fixed counterfactuals found for {domain} domain. Generating new ones.")
 		counterfactuals = simulate_qg(
-			model=simqg_model[0],
+			model=simqg_model,
 			orig_inputs=data,
 			orig_tm_preds=[{'pred_expl': ''}]*len(data), # Dummy explanations
 			top_p=1.0,

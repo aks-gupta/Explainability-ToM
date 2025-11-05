@@ -38,4 +38,9 @@ bootstrap_diffs = np.array(bootstrap_diffs)
 lower = np.percentile(bootstrap_diffs, 5)
 upper = np.percentile(bootstrap_diffs, 95)
 
+model_version = simulation_file.split('/')[2]
+version = simulation_file.split('/')[3]
+print(f"Model: {model_version}, Version: {version}")
+
+
 print(f"Bootstrap 90% CI for agreement difference: [{lower:.3f}, {upper:.3f}]")

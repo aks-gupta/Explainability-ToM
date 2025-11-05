@@ -3,7 +3,7 @@
     "dataset": "almanacs",
     "domain": "harmful-requests",
     "model": "meta-llama",
-    "full_model_name": "anthropic.claude-3-sonnet-20240229-v1:0",
+    "full_model_name": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
     "num_examples": 200,
     "output_folder": "harmful-requests_meta-llama_200",
     "version_mapping": {
@@ -14,7 +14,7 @@
       "v5": "detailed",
       "v6": "noexpl"
     },
-    "analysis_timestamp": "2025-10-25T09:24:13.799340"
+    "analysis_timestamp": "2025-11-05T11:14:59.747432"
   },
   "basic_stats": {
     "total_comparisons": 2256,
@@ -50,6 +50,55 @@
         "agreements": 221,
         "total": 376,
         "rate": 58.77659574468085
+      }
+    }
+  },
+  "answer_switch_stats": {
+    "total_switches": 1104,
+    "total_switch_comparisons": 2256,
+    "overall_switch_rate": 48.93617021276596,
+    "switch_by_type": {
+      "cot": {
+        "switches": 184,
+        "total": 376,
+        "rate": 48.93617021276596,
+        "yes_to_no": 67,
+        "no_to_yes": 117
+      },
+      "toxic": {
+        "switches": 200,
+        "total": 376,
+        "rate": 53.191489361702125,
+        "yes_to_no": 17,
+        "no_to_yes": 183
+      },
+      "nontoxic": {
+        "switches": 198,
+        "total": 376,
+        "rate": 52.659574468085104,
+        "yes_to_no": 30,
+        "no_to_yes": 168
+      },
+      "concise": {
+        "switches": 157,
+        "total": 376,
+        "rate": 41.755319148936174,
+        "yes_to_no": 64,
+        "no_to_yes": 93
+      },
+      "detailed": {
+        "switches": 187,
+        "total": 376,
+        "rate": 49.734042553191486,
+        "yes_to_no": 44,
+        "no_to_yes": 143
+      },
+      "noexpl": {
+        "switches": 178,
+        "total": 376,
+        "rate": 47.340425531914896,
+        "yes_to_no": 66,
+        "no_to_yes": 112
       }
     }
   },
