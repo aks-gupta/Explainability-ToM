@@ -43,23 +43,32 @@ def call_openai_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p
 
 client_together = Together()
 
-def call_together_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p=1.0, max_tokens=200, stop=None):
+def call_together_api(model, prompts, bsz=1, num_processes=1, temperature=0, top_p=1.0, max_tokens=200, stop=None, max_retries=15):
     responses = []
     for i, prompt in enumerate(prompts):
-        try:
-            response = client_together.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                top_p=top_p,
-                # max_tokens=max_tokens,
-                # stop=stop
-            )
-            responses.append(response.choices[0].message.content)
-        except Exception as e:
-            print(f"[{i}] Error during call:\nPrompt: {prompt[:100]}...\nError: {e}")
-            responses.append("Error: Unable to generate response")
-            time.sleep(1)
+        retry_count = 0
+        while True:
+            try:
+                response = client_together.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=temperature,
+                    top_p=top_p,
+                    # max_tokens=max_tokens,
+                    # stop=stop
+                )
+                # If successful, append the result and break
+                responses.append(response.choices[0].message.content)
+                break
+            except Exception as e:
+                retry_count += 1
+                wait_time = min(30, 2 ** min(retry_count, 5)) + random.random()
+                print(f"[{i}] Error during API call (attempt {retry_count}): {e}")
+                print(f"Retrying in {wait_time:.2f} seconds...")
+                time.sleep(wait_time)
+                if max_retries is not None and retry_count >= max_retries:
+                    responses.append("Error: Unable to generate response after retries")
+                    break
     return responses
 
 
