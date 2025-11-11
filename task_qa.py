@@ -41,7 +41,7 @@ def task_qa_hiring_decisions(model, expl_type, inputs):
     for p in prints:
         if print_debug:
             print(p)
-    if expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic']:
+    if expl_type in ['cot', 'concise', 'detailed', 'toxic', 'nontoxic', 'biased', 'nonbiased']:
         pred_answers = []
         for i, pred_expl in enumerate(pred_expls):
             # print(f"DEBUG TaskQA Response {i}: {pred_expl}")
