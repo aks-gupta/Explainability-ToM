@@ -12,16 +12,18 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # Output folder to analyze (e.g., "harmful-requests_meta-llama_200", "hiring-decisions_mistral.mistral-7b-instruct-v0:2_200")
 # OUTPUT_FOLDER = "harmful-requests_mistral.mistral-7b-instruct-v0:2_200"
-OUTPUT_FOLDER = "harmful-requests_meta-llama_200"
+OUTPUT_FOLDER = "sycophancy_meta-llama_200"
 
 # Version to explanation type mapping
 VERSION_MAPPING = {
     'v1': 'cot',
-    'v5': 'toxic', 
-    'v6': 'nontoxic',
-    'v3': 'concise',
-    'v4': 'detailed',
-    'v7': 'noexpl',
+    'v4': 'toxic', 
+    'v5': 'nontoxic',
+    'v2': 'concise',
+    'v3': 'detailed',
+    'v6': 'noexpl',
+    'v8': 'biased',
+    'v9': 'nonbiased'
 }
 
 # Number of examples to analyze

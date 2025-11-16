@@ -8,243 +8,216 @@
     "output_folder": "harmful-requests_meta-llama_200",
     "version_mapping": {
       "v1": "cot",
-      "v2": "toxic",
-      "v3": "nontoxic",
-      "v4": "concise",
-      "v5": "detailed",
-      "v6": "noexpl"
+      "v5": "toxic",
+      "v6": "nontoxic",
+      "v3": "concise",
+      "v4": "detailed",
+      "v7": "noexpl"
     },
-    "analysis_timestamp": "2025-11-05T11:14:59.747432"
+    "analysis_timestamp": "2025-11-05T16:02:16.365752"
   },
   "basic_stats": {
-    "total_comparisons": 2256,
-    "total_agreements": 1591,
-    "overall_agreement_rate": 70.52304964539007,
+    "total_comparisons": 0,
+    "total_agreements": 0,
+    "overall_agreement_rate": 0,
     "agreement_by_type": {
       "cot": {
-        "agreements": 289,
-        "total": 376,
-        "rate": 76.86170212765957
+        "agreements": 0,
+        "total": 0,
+        "rate": 0
       },
       "toxic": {
-        "agreements": 266,
-        "total": 376,
-        "rate": 70.74468085106383
+        "agreements": 0,
+        "total": 0,
+        "rate": 0
       },
       "nontoxic": {
-        "agreements": 279,
-        "total": 376,
-        "rate": 74.20212765957447
+        "agreements": 0,
+        "total": 0,
+        "rate": 0
       },
       "concise": {
-        "agreements": 251,
-        "total": 376,
-        "rate": 66.75531914893617
+        "agreements": 0,
+        "total": 0,
+        "rate": 0
       },
       "detailed": {
-        "agreements": 285,
-        "total": 376,
-        "rate": 75.79787234042553
+        "agreements": 0,
+        "total": 0,
+        "rate": 0
       },
       "noexpl": {
-        "agreements": 221,
-        "total": 376,
-        "rate": 58.77659574468085
+        "agreements": 0,
+        "total": 0,
+        "rate": 0
       }
     }
   },
   "answer_switch_stats": {
-    "total_switches": 1104,
-    "total_switch_comparisons": 2256,
-    "overall_switch_rate": 48.93617021276596,
+    "total_switches": 0,
+    "total_switch_comparisons": 0,
+    "overall_switch_rate": 0,
     "switch_by_type": {
       "cot": {
-        "switches": 184,
-        "total": 376,
-        "rate": 48.93617021276596,
-        "yes_to_no": 67,
-        "no_to_yes": 117
+        "switches": 0,
+        "total": 0,
+        "rate": 0,
+        "yes_to_no": 0,
+        "no_to_yes": 0
       },
       "toxic": {
-        "switches": 200,
-        "total": 376,
-        "rate": 53.191489361702125,
-        "yes_to_no": 17,
-        "no_to_yes": 183
+        "switches": 0,
+        "total": 0,
+        "rate": 0,
+        "yes_to_no": 0,
+        "no_to_yes": 0
       },
       "nontoxic": {
-        "switches": 198,
-        "total": 376,
-        "rate": 52.659574468085104,
-        "yes_to_no": 30,
-        "no_to_yes": 168
+        "switches": 0,
+        "total": 0,
+        "rate": 0,
+        "yes_to_no": 0,
+        "no_to_yes": 0
       },
       "concise": {
-        "switches": 157,
-        "total": 376,
-        "rate": 41.755319148936174,
-        "yes_to_no": 64,
-        "no_to_yes": 93
+        "switches": 0,
+        "total": 0,
+        "rate": 0,
+        "yes_to_no": 0,
+        "no_to_yes": 0
       },
       "detailed": {
-        "switches": 187,
-        "total": 376,
-        "rate": 49.734042553191486,
-        "yes_to_no": 44,
-        "no_to_yes": 143
+        "switches": 0,
+        "total": 0,
+        "rate": 0,
+        "yes_to_no": 0,
+        "no_to_yes": 0
       },
       "noexpl": {
-        "switches": 178,
-        "total": 376,
-        "rate": 47.340425531914896,
-        "yes_to_no": 66,
-        "no_to_yes": 112
+        "switches": 0,
+        "total": 0,
+        "rate": 0,
+        "yes_to_no": 0,
+        "no_to_yes": 0
       }
     }
   },
   "answer_distributions": {
     "cot": {
       "original_taskqa": {
-        "yes": 149,
-        "no": 227,
+        "yes": 0,
+        "no": 0,
         "neither": 0
       },
       "taskqa_sim": {
-        "yes": 221,
-        "no": 155,
+        "yes": 0,
+        "no": 0,
         "neither": 0
       },
       "simqa": {
-        "yes": 176,
-        "no": 197,
-        "neither": 3
+        "yes": 0,
+        "no": 0,
+        "neither": 0
       }
     },
     "toxic": {
       "original_taskqa": {
-        "yes": 365,
-        "no": 11,
+        "yes": 0,
+        "no": 0,
         "neither": 0
       },
       "taskqa_sim": {
-        "yes": 337,
-        "no": 39,
+        "yes": 0,
+        "no": 0,
         "neither": 0
       },
       "simqa": {
-        "yes": 229,
-        "no": 143,
-        "neither": 4
+        "yes": 0,
+        "no": 0,
+        "neither": 0
       }
     },
     "nontoxic": {
       "original_taskqa": {
-        "yes": 355,
-        "no": 21,
+        "yes": 0,
+        "no": 0,
         "neither": 0
       },
       "taskqa_sim": {
-        "yes": 309,
-        "no": 67,
+        "yes": 0,
+        "no": 0,
         "neither": 0
       },
       "simqa": {
-        "yes": 226,
-        "no": 148,
-        "neither": 2
+        "yes": 0,
+        "no": 0,
+        "neither": 0
       }
     },
     "concise": {
       "original_taskqa": {
-        "yes": 160,
-        "no": 166,
-        "neither": 50
+        "yes": 0,
+        "no": 0,
+        "neither": 0
       },
       "taskqa_sim": {
-        "yes": 178,
-        "no": 139,
-        "neither": 59
+        "yes": 0,
+        "no": 0,
+        "neither": 0
       },
       "simqa": {
-        "yes": 168,
-        "no": 207,
-        "neither": 1
+        "yes": 0,
+        "no": 0,
+        "neither": 0
       }
     },
     "detailed": {
       "original_taskqa": {
-        "yes": 269,
-        "no": 107,
+        "yes": 0,
+        "no": 0,
         "neither": 0
       },
       "taskqa_sim": {
-        "yes": 268,
-        "no": 100,
-        "neither": 8
+        "yes": 0,
+        "no": 0,
+        "neither": 0
       },
       "simqa": {
-        "yes": 201,
-        "no": 171,
-        "neither": 4
+        "yes": 0,
+        "no": 0,
+        "neither": 0
       }
     },
     "noexpl": {
       "original_taskqa": {
-        "yes": 131,
-        "no": 213,
-        "neither": 32
+        "yes": 0,
+        "no": 0,
+        "neither": 0
       },
       "taskqa_sim": {
-        "yes": 216,
-        "no": 160,
+        "yes": 0,
+        "no": 0,
         "neither": 0
       },
       "simqa": {
-        "yes": 69,
-        "no": 302,
-        "neither": 5
+        "yes": 0,
+        "no": 0,
+        "neither": 0
       }
     }
   },
   "cross_version_consistency": {
-    "original_taskqa_consistent": 92,
-    "taskqa_sim_consistent": 171,
-    "simqa_consistent": 184,
-    "total_cross_version_comparisons": 376
+    "original_taskqa_consistent": 0,
+    "taskqa_sim_consistent": 0,
+    "simqa_consistent": 0,
+    "total_cross_version_comparisons": 0
   },
   "disagreement_patterns": {
-    "cot": {
-      "TaskQA-sim=no, SimQA=yes": 21,
-      "TaskQA-sim=yes, SimQA=no": 63,
-      "TaskQA-sim=yes, SimQA=neither": 3
-    },
-    "toxic": {
-      "TaskQA-sim=yes, SimQA=no": 105,
-      "TaskQA-sim=yes, SimQA=neither": 4,
-      "TaskQA-sim=no, SimQA=yes": 1
-    },
-    "nontoxic": {
-      "TaskQA-sim=yes, SimQA=no": 88,
-      "TaskQA-sim=no, SimQA=yes": 7,
-      "TaskQA-sim=yes, SimQA=neither": 2
-    },
-    "concise": {
-      "TaskQA-sim=yes, SimQA=no": 49,
-      "TaskQA-sim=no, SimQA=yes": 16,
-      "TaskQA-sim=neither, SimQA=no": 35,
-      "TaskQA-sim=neither, SimQA=yes": 24,
-      "TaskQA-sim=yes, SimQA=neither": 1
-    },
-    "detailed": {
-      "TaskQA-sim=yes, SimQA=no": 71,
-      "TaskQA-sim=no, SimQA=yes": 8,
-      "TaskQA-sim=yes, SimQA=neither": 4,
-      "TaskQA-sim=neither, SimQA=no": 8
-    },
-    "noexpl": {
-      "TaskQA-sim=yes, SimQA=no": 146,
-      "TaskQA-sim=yes, SimQA=neither": 5,
-      "TaskQA-sim=no, SimQA=yes": 4
-    }
+    "cot": {},
+    "toxic": {},
+    "nontoxic": {},
+    "concise": {},
+    "detailed": {},
+    "noexpl": {}
   }
 }
