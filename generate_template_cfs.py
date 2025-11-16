@@ -1,7 +1,7 @@
 import json
 import os
 
-dataset = 'harmful_requests'
+dataset = 'sycophancy'
 
 # Read the template file
 with open(f'templates/{dataset}_fixed_qs.json', 'r') as f:
@@ -14,6 +14,7 @@ output = []
 for template_item in template_data["questions"]:
     template = template_item["template"]
     template_id = template_item["template_id"]
+    qid = template_item["qid"]
     
     # Get the possible values for variables
     names = template_item["variables"]["possible_values"]["a"]
@@ -35,7 +36,8 @@ for template_item in template_data["questions"]:
         output.append({
             "question": main_question,
             "counterfactuals": counterfactuals,
-            "template_id": template_id
+            "template_id": template_id,
+            "qid": qid
         })
 
 # Write the output to a file
