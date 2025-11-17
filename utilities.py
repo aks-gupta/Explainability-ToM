@@ -17,7 +17,7 @@ def list_files_in_folder(folder_path):
     except PermissionError:
         print(f"Permission denied to access '{folder_path}'.")
     
-def preprocess_label_balanced_counterfactuals(path_to_cfs):
+def preprocess_label_balanced_counterfactuals(path_to_cfs, og_file_path="label_balanced_original_questions", cf_file_path="label_balanced_counterfactuals"):
 	#Generate file for task model questions
 	with open(path_to_cfs, "r") as f:
 		data = json.load(f)
@@ -33,10 +33,10 @@ def preprocess_label_balanced_counterfactuals(path_to_cfs):
 		counterfactual_questions[seq_key] = {"questions": value["counterfactual_questions"]}
 
 	# === Step 3: Save both new PKL files ===
-	with open(f"./data/preprocessed/label_balanced_original_questions_{configs.DOMAIN}.json", "w") as f:
+	with open(f"./data/preprocessed/{og_file_path}_{configs.DOMAIN}.json", "w") as f:
 		json.dump(original_questions, f)
 
-	with open(f"./data/preprocessed/label_balanced_counterfactuals_{configs.DOMAIN}.pkl", "wb") as f:
+	with open(f"./data/preprocessed/{cf_file_path}_{configs.DOMAIN}.pkl", "wb") as f:
 		pickle.dump(counterfactual_questions, f)
           
 

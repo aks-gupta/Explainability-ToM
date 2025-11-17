@@ -7,8 +7,9 @@ dataset = 'sycophancy'
 with open(f'templates/{dataset}_fixed_qs.json', 'r') as f:
     template_data = json.load(f)
 
-# Initialize the output structure
-output = []
+# Initialize the output structure as a dictionary with numeric keys
+output = {}
+counter = 0
 
 # For each template in the template file
 for template_item in template_data["questions"]:
@@ -32,13 +33,14 @@ for template_item in template_data["questions"]:
             counterfactual = template.replace("[a]", name).replace("[b]", background)
             counterfactuals.append(counterfactual)
         
-        # Add to output structure
-        output.append({
+        # Add to output structure with numeric index
+        output[str(counter)] = {
             "question": main_question,
-            "counterfactuals": counterfactuals,
+            "counterfactual_questions": counterfactuals,
             "template_id": template_id,
             "qid": qid
-        })
+        }
+        counter += 1
 
 # Write the output to a file
 output_file = f'./templates/counterfactuals_output_{dataset}.json'

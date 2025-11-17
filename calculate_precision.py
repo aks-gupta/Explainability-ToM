@@ -15,7 +15,7 @@ def calculate_precision(taskqa_model, taskqa_expl_type):
 	top_p = 1.0
 	simqa_model = MODEL_CONFIGS['simqa_model']
 	with_context = True
-	folder_name = f"outputs/{DOMAIN}_{MODEL_CONFIGS['taskqa_model'].split('/')[0]}_{GENERAL_CONFIGS['num_examples']}"
+	folder_name = f"outputs/{DOMAIN}_{MODEL_CONFIGS['taskqa_model'].split('/')[0]}_{GENERAL_CONFIGS['num_examples']}_counterfactuals_{GENERAL_CONFIGS['counterfactuals']}"
 	full_path = return_last_max_version(folder_path=folder_name)
 	print(f"Calculating precision for folder: {full_path}")
 

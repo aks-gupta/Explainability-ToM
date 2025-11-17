@@ -57,7 +57,7 @@ def main():
     timestamp = time.time()
     
     #Create folder based on versions
-    folder_name = f"outputs/{DOMAIN}_{MODEL_CONFIGS['taskqa_model'].split('/')[0]}_{GENERAL_CONFIGS['num_examples']}"
+    folder_name = f"outputs/{DOMAIN}_{MODEL_CONFIGS['taskqa_model'].split('/')[0]}_{GENERAL_CONFIGS['num_examples']}_counterfactuals_{GENERAL_CONFIGS['counterfactuals']}"
     full_path = create_folder_based_on_version(folder_name)
     print(f"Output Directory: {full_path}")
 
@@ -85,8 +85,12 @@ def main():
     print("="*60)
     # for taskqa_model in MODEL_CONFIGS['taskqa_model']:
     #     for taskqa_expl_type in MODEL_CONFIGS['taskqa_expl_type']:
-            # print(f"Running TaskQA: {taskqa_model} with {taskqa_expl_type}")                
-    if counterfactual_code_generation=='LABEL_BALANCED':
+            # print(f"Running TaskQA: {taskqa_model} with {taskqa_expl_type}") 
+    if counterfactual_code_generation=="TEMPLATE_BASED":
+        preprocess_label_balanced_counterfactuals(f'./templates/counterfactuals_output_{DOMAIN}.json', "template_based_original_questions", "template_based_counterfactuals")
+        with open(f'./data/preprocessed/template_based_original_questions_{DOMAIN}.json', "rb") as f:
+            test_inputs = json.load(f)
+    elif counterfactual_code_generation=='LABEL_BALANCED':
         preprocess_label_balanced_counterfactuals(f'./data/disagreement_dataset/disagreement_filtered_{DOMAIN}_{num_disagreement_qs}.json')
         with open(f'./data/preprocessed/label_balanced_original_questions_{DOMAIN}.json', "rb") as f:
             test_inputs = json.load(f)
@@ -104,6 +108,9 @@ def main():
     print("="*60)
     if counterfactual_code_generation=='HARDCODED':
         step_2_out = f'data/hardcoded_counterfactuals.pkl'
+    elif counterfactual_code_generation=="TEMPLATE_BASED":
+        step_2_out = f"./data/preprocessed/template_based_counterfactuals_{DOMAIN}.pkl"
+        print("Using template based counterfactuals")
     elif counterfactual_code_generation=='LABEL_BALANCED':
         step_2_out = f"./data/preprocessed/label_balanced_counterfactuals_{DOMAIN}.pkl"
         print("Using label balanced counterfactuals")
@@ -139,6 +146,9 @@ def main():
             step_3_out = f"{full_path}/{DOMAIN}_{GENERAL_CONFIGS['step_3_out']}_{taskqa_model.split('/')[0]}_simqg_{simqg_model.split('/')[0]}_simqa_{simqa_model.split('/')[0]}_{taskqa_expl_type}_{GENERAL_CONFIGS['num_examples']}.pkl"
             if counterfactual_code_generation=='LABEL_BALANCED':
                 with open(f'./data/preprocessed/label_balanced_original_questions_{DOMAIN}.json', "rb") as f:
+                    orig_inputs = json.load(f)
+            elif counterfactual_code_generation=="TEMPLATE_BASED":
+                with open(f'./data/preprocessed/template_based_original_questions_{DOMAIN}.json', "rb") as f:
                     orig_inputs = json.load(f)
             else:
                 orig_inputs = json.load(open(DATA_FILE))['test']

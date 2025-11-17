@@ -1,8 +1,8 @@
 GENERAL_CONFIGS = {
-    'num_examples': 200,
+    'num_examples': 1,
     'num_disagreement_qs': 500,
     'k_shot': 3, #0->1, 1->2, 3->3, 5->4
-    'counterfactuals': 'LABEL_BALANCED', #HARDCODED/GENERATED/LABEL_BALANCED
+    'counterfactuals': 'TEMPLATE_BASED', #HARDCODED/GENERATED/LABEL_BALANCED/TEMPLATE_BASED
     'num_counterfactual_qs': 2, #set to 1 if HARDCODED and 2 if LABEL_BALANCED
     'step_1_out': 'task_qa_out', 
     'step_2_out': 'simulation_question_gen_out', 
