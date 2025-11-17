@@ -26,7 +26,7 @@ MODEL_CONFIGS = {
 
 # Dataset and domain settings
 DATASET = 'almanacs'
-DOMAIN = 'sycophancy' # Options: 'hiring-decisions', 'sycophancy', 'harmful-requests'
+DOMAIN = 'harmful-requests' # Options: 'hiring-decisions', 'sycophancy', 'harmful-requests'
 
 # Data file for this dataset/domain
 DATA_FILE = './data/hiring_decisions/almanacs_hiring_decisions_question.json'

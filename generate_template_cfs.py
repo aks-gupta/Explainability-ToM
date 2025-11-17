@@ -1,7 +1,7 @@
 import json
 import os
 
-dataset = 'harmful_requests'
+dataset = 'harmful-requests'
 
 # Read the template file
 with open(f'templates/{dataset}_fixed_qs.json', 'r') as f:
