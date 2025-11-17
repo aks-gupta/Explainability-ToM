@@ -1,7 +1,7 @@
 import json
 import os
 
-dataset = 'hiring_decisions'
+dataset = 'harmful_requests'
 
 # Read the template file
 with open(f'templates/{dataset}_fixed_qs.json', 'r') as f:
