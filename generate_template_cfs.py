@@ -1,7 +1,7 @@
 import json
 import os
 
-dataset = 'sycophancy'
+dataset = 'hiring_decisions'
 
 # Read the template file
 with open(f'templates/{dataset}_fixed_qs.json', 'r') as f:
