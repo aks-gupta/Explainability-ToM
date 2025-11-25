@@ -20,13 +20,19 @@ COUNTERFACTUAL_TYPE = GENERAL_CONFIGS['counterfactuals']
 #   TEMPLATE_BASED: "harmful-requests_mistral.mistral-7b-instruct-v0:2_1_counterfactuals_TEMPLATE_BASED"
 #   LABEL_BALANCED: "harmful-requests_meta-llama_200"
 # OUTPUT_FOLDER = "harmful-requests_mistral.mistral-7b-instruct-v0:2_1_counterfactuals_TEMPLATE_BASED"
-OUTPUT_FOLDER = "harmful-requests_mistral.mistral-7b-instruct-v0:2_1_counterfactuals_TEMPLATE_BASED"
-# Number of examples to analyze
+OUTPUT_FOLDER = "harmful-requests_llama3-2-90b-instruct_30_counterfactuals_TEMPLATE_BASED"
 LIMIT_EXAMPLES = GENERAL_CONFIGS['num_examples']
 
 # Version to explanation type mapping
 VERSION_MAPPING = {
-    'v3': 'nonbiased'
+    'v1': 'biased',
+    'v2': 'cot',
+    'v3': 'nonbiased',
+    'v4': 'concise',
+    'v5': 'detailed',
+    'v6': 'toxic',
+    'v7': 'nontoxic',
+    'v8': 'noexpl'
 }
 
 # Disagreement dataset path (only used for LABEL_BALANCED, not for TEMPLATE_BASED)
@@ -83,6 +89,23 @@ def load_disagreement_dataset(filepath):
         print(f"Error loading disagreement dataset from {filepath}: {e}")
         return None
 
+def load_template_qids():
+    if COUNTERFACTUAL_TYPE != 'TEMPLATE_BASED':
+        return {}
+    try:
+        filename = f"counterfactuals_output_{DOMAIN}.json"
+        filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../templates', filename)
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+        qids = {}
+        for key, value in data.items():
+            qid_value = value.get('qid', key) if isinstance(value, dict) else key
+            qids[str(key)] = str(qid_value)
+        return qids
+    except Exception as e:
+        print(f"Error loading template qids: {e}")
+        return {}
+
 def create_comprehensive_analysis(limit_examples, output_folder, version_mapping, disagreement_dataset_path):
     """Create comprehensive analysis comparing different explanation types"""
     
@@ -102,6 +125,9 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
     # Load original questions and counterfactuals
     original_questions = load_original_questions()
     counterfactuals = load_counterfactuals()
+    template_qids = {}
+    if COUNTERFACTUAL_TYPE == 'TEMPLATE_BASED':
+        template_qids = load_template_qids()
     
     if not original_questions or not counterfactuals:
         print("Failed to load base data")
@@ -313,17 +339,9 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
         'total_cross_version_comparisons': 0
     }
     
-    # For template-based: track qid from counterfactuals data
-    if COUNTERFACTUAL_TYPE == 'TEMPLATE_BASED':
-        example_to_qid = {}
-        for ex_id in example_ids:
-            cf_data = counterfactuals[ex_id]
-            if 'qid' in cf_data:
-                example_to_qid[str(ex_id)] = cf_data['qid']
-    
     for example in analysis_results:
         example_str_id = str(example['example_id'])
-        qid = example_to_qid.get(example_str_id, example_str_id) if COUNTERFACTUAL_TYPE == 'TEMPLATE_BASED' else None
+        qid = template_qids.get(example_str_id, example_str_id) if COUNTERFACTUAL_TYPE == 'TEMPLATE_BASED' else None
         
         for cf in example['counterfactuals']:
             baseline_ans = cf.get('baseline_answer', '')
@@ -403,17 +421,19 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
                 taskqa_sim_answers = metrics['taskqa_sim_answers']
                 original_answers_list = metrics['original_taskqa_answers']
                 
-                # Bias rate: majority answer frequency among TaskQA-Sim
                 if taskqa_sim_answers and original_answers_list:
                     answer_counts_qid = Counter(taskqa_sim_answers)
                     max_count = max(answer_counts_qid.values()) if answer_counts_qid else 0
                     total_count = len(taskqa_sim_answers)
                     bias_rate = max_count / total_count if total_count > 0 else 0
                     
-                    # Consistency: check if all original_taskqa_answers are the same
-                    unique_original_answers = set(ans.lower() for ans in original_answers_list)
-                    original_consistency = 1.0 if len(unique_original_answers) == 1 else 0.0
-                    most_common_original = original_answers_list[0] if original_answers_list else 'unknown'
+                    normalized_originals = [ (ans or 'neither').lower() for ans in original_answers_list ]
+                    original_counts = Counter(normalized_originals)
+                    max_original = max(original_counts.values()) if original_counts else 0
+                    total_original = len(normalized_originals)
+                    original_consistency = max_original / total_original if total_original > 0 else 0
+                    most_common_original = original_counts.most_common(1)[0][0] if original_counts else 'unknown'
+                    all_originals_same = original_consistency == 1.0
                     
                     qid_bias_consistency[expl_type][qid] = {
                         'bias_rate': bias_rate,
@@ -422,7 +442,7 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
                         'cf_answer_distribution': dict(answer_counts_qid),
                         'original_taskqa_answer': most_common_original,
                         'majority_cf_answer': answer_counts_qid.most_common(1)[0][0] if answer_counts_qid else None,
-                        'all_originals_same': len(unique_original_answers) == 1
+                        'all_originals_same': all_originals_same
                     }
     
     # Print comprehensive summary
