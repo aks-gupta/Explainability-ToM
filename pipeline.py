@@ -13,6 +13,7 @@ from configs import GENERAL_CONFIGS, MODEL_CONFIGS, DATASET, DOMAIN, DATA_FILE
 from calculate_precision import calculate_precision
 from util_scripts.pkl_to_json import pkl_to_json
 
+# take in argument from command line if any
 
 def run_task_save_results(task_function, out_file, ex_idxs, **kwargs):
     if os.path.exists(out_file):
