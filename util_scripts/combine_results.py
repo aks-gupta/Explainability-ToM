@@ -32,7 +32,7 @@ def combine_results(folder_name):
     print(f"Combined results saved to {folder_name}/{subfolder_name}.json")
 
 if __name__ == "__main__":
-    folder_name = "../outputs/sycophancy_mistral.mistral-7b-instruct-v0:2_200"
+    folder_name = "../outputs/sycophancy_llama3-2-90b-instruct_30_counterfactuals_TEMPLATE_BASED"
     script_dir = os.path.dirname(os.path.abspath(__file__))
     folder_path = os.path.join(script_dir, folder_name)
 
