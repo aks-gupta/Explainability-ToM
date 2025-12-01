@@ -432,7 +432,7 @@ def save_global_confusion_heatmap(TP, FP, FN, TN, output_dir):
         cm,
         annot=True,
         fmt="d",
-        cmap="Blues",
+        cmap="Reds",
         xticklabels=["Pred Switch", "Pred No Switch"],
         yticklabels=["Actual Switch", "Actual No Switch"],
         cbar=False
@@ -540,7 +540,7 @@ def save_cf_heatmaps(cf_b_stats, orig_to_cf_switch, orig_to_cf_qid, output_dir):
         annot=True,
         xticklabels=cf_b_list,
         yticklabels=orig_b_list,
-        cmap="Blues"
+        cmap="Reds"
     )
     plt.title("Original_b → CF_b Switch Count Matrix")
     plt.xlabel("Counterfactual b")
@@ -617,7 +617,7 @@ def save_cf_heatmaps(cf_b_stats, orig_to_cf_switch, orig_to_cf_qid, output_dir):
         sns.heatmap(
             df_matrix,
             annot=True,
-            cmap="Blues",
+            cmap="Reds",
             xticklabels=cf_list,
             yticklabels=orig_list,
             fmt="d",
@@ -682,7 +682,491 @@ def save_qid_pie_charts(qid_stats, option_label, output_dir):
             "confusion_slices"
         )
 
+# -----------------------------------------------
+# SNIPPET 1: Add this function after save_qid_pie_charts() function
+# -----------------------------------------------
 
+def compute_simulatability_by_option(grouped):
+    """
+    Compute simulatability statistics for each option [a] and [b] value, split by QID.
+    
+    CORRECTED DEFINITION:
+    Simulatable = sim_ans == task_ans (simulation's answer matches the actual task answer for CF)
+    This is independent of whether a switch occurred.
+    """
+    # Structure: {qid: {option_value: {"simulatable": count, "not_simulatable": count}}}
+    simulatability_a = {0: defaultdict(lambda: {"simulatable": 0, "not_simulatable": 0}),
+                        1: defaultdict(lambda: {"simulatable": 0, "not_simulatable": 0})}
+    
+    simulatability_b = {0: defaultdict(lambda: {"simulatable": 0, "not_simulatable": 0}),
+                        1: defaultdict(lambda: {"simulatable": 0, "not_simulatable": 0})}
+    
+    for item in grouped.values():
+        tpl = item.get("template", {})
+        cf = item.get("cf", {})
+        
+        qid = cf.get("qid")
+        if qid not in (0, 1):
+            continue
+        
+        question_text = cf.get("question", "")
+        possible_a = tpl.get("variables", {}).get("possible_values", {}).get("a", [])
+        possible_b = tpl.get("variables", {}).get("possible_values", {}).get("b", [])
+        
+        used_a = next((a for a in possible_a if a in question_text), None)
+        used_b = next((b for b in possible_b if b in question_text), None)
+        
+        if used_a is None or used_b is None:
+            continue
+        
+        sim_list = [norm(a.get("pred_ans")) for a in item.get("simqa", [])]
+        tasksim_list = [norm(a.get("pred_ans")) for a in item.get("tasksim", [])]
+        
+        if not sim_list or not tasksim_list:
+            continue
+        
+        for sim_ans, task_ans in zip(sim_list, tasksim_list):
+            # CORRECTED: Simulatable if simulation answer matches task answer for CF
+            is_simulatable = (sim_ans == task_ans)
+            
+            # Update option A stats
+            if is_simulatable:
+                simulatability_a[qid][used_a]["simulatable"] += 1
+            else:
+                simulatability_a[qid][used_a]["not_simulatable"] += 1
+            
+            # Update option B stats
+            if is_simulatable:
+                simulatability_b[qid][used_b]["simulatable"] += 1
+            else:
+                simulatability_b[qid][used_b]["not_simulatable"] += 1
+    
+    return simulatability_a, simulatability_b
+
+def compute_cf_simulatability_by_original_b(grouped):
+    """
+    For each original option [b], compute simulatability stats for each counterfactual [b].
+    Split by QID.
+    
+    Returns: {qid: {original_b: {cf_b: {"simulatable": count, "not_simulatable": count}}}}
+    """
+    cf_simulatability = {
+        0: defaultdict(lambda: defaultdict(lambda: {"simulatable": 0, "not_simulatable": 0})),
+        1: defaultdict(lambda: defaultdict(lambda: {"simulatable": 0, "not_simulatable": 0}))
+    }
+    
+    for item in grouped.values():
+        tpl = item.get("template", {})
+        cf = item.get("cf", {})
+        
+        qid = cf.get("qid")
+        if qid not in (0, 1):
+            continue
+        
+        question_text = cf.get("question", "")
+        possible_b = tpl.get("variables", {}).get("possible_values", {}).get("b", [])
+        
+        # Get original b value
+        used_b = next((b for b in possible_b if b in question_text), None)
+        if used_b is None:
+            continue
+        
+        sim_list = [norm(a.get("pred_ans")) for a in item.get("simqa", [])]
+        tasksim_list = [norm(a.get("pred_ans")) for a in item.get("tasksim", [])]
+        cf_questions = item.get("cf", {}).get("counterfactual_questions", [])
+        
+        if not sim_list or not tasksim_list:
+            continue
+        
+        for idx, (sim_ans, task_ans) in enumerate(zip(sim_list, tasksim_list)):
+            # Get the CF b value for this counterfactual
+            cf_b = None
+            if idx < len(cf_questions):
+                cf_q = cf_questions[idx]
+                cf_b = next((b for b in possible_b if b in cf_q), None)
+            
+            if cf_b is None:
+                continue
+            
+            # Simulatable if simulation answer matches task answer
+            is_simulatable = (sim_ans == task_ans)
+            
+            if is_simulatable:
+                cf_simulatability[qid][used_b][cf_b]["simulatable"] += 1
+            else:
+                cf_simulatability[qid][used_b][cf_b]["not_simulatable"] += 1
+    
+    return cf_simulatability
+
+
+# -----------------------------------------------
+# SNIPPET 3: Function to save CF simulatability pie charts
+# Add this after compute_cf_simulatability_by_original_b()
+# -----------------------------------------------
+
+def save_cf_simulatability_pie_charts(cf_simulatability, output_dir):
+    """
+    Save pie charts showing simulatability for each CF option [b] grouped by original option [b].
+    One chart per (qid, original_b, cf_b) combination.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    
+    for qid in (0, 1):
+        qid_data = cf_simulatability[qid]
+        
+        for original_b in sorted(qid_data.keys()):
+            cf_data = qid_data[original_b]
+            
+            for cf_b in sorted(cf_data.keys()):
+                stats = cf_data[cf_b]
+                simulatable = stats["simulatable"]
+                not_simulatable = stats["not_simulatable"]
+                total = simulatable + not_simulatable
+                
+                if total == 0:
+                    continue
+                
+                # Create pie chart
+                plt.figure(figsize=(7, 7))
+                sizes = [simulatable, not_simulatable]
+                labels = [f"Simulatable ({simulatable})", f"Not Simulatable ({not_simulatable})"]
+                colors = ['#3498db', '#e74c3c']  # Blue for simulatable, red for not
+                explode = (0.05, 0)
+                
+                plt.pie(
+                    sizes,
+                    labels=labels,
+                    autopct='%1.1f%%',
+                    startangle=90,
+                    colors=colors,
+                    explode=explode,
+                    shadow=True,
+                    textprops={'fontsize': 11, 'weight': 'bold'}
+                )
+                
+                # Calculate percentage
+                sim_pct = (simulatable / total) * 100
+                not_sim_pct = (not_simulatable / total) * 100
+                
+                plt.title(
+                    f"CF Simulatability: {original_b} → {cf_b}\n"
+                    f"QID {qid} | Not Simulatable: {not_sim_pct:.1f}%",
+                    fontsize=13,
+                    weight='bold',
+                    pad=20
+                )
+                plt.tight_layout()
+                
+                # Safe filename
+                safe_orig = original_b.replace('/', '_').replace(' ', '_').replace('-', '_')
+                safe_cf = cf_b.replace('/', '_').replace(' ', '_').replace('-', '_')
+                filename = f"cf_sim_qid{qid}_{safe_orig}_to_{safe_cf}.png"
+                out_path = os.path.join(output_dir, filename)
+                plt.savefig(out_path, dpi=300, bbox_inches='tight')
+                plt.close()
+                
+                print(f"[Saved] {out_path}")
+
+
+# -----------------------------------------------
+# SNIPPET 4: Function to save summary heatmap of CF simulatability
+# Add this after save_cf_simulatability_pie_charts()
+# -----------------------------------------------
+
+def save_cf_simulatability_heatmap(cf_simulatability, output_dir):
+    """
+    Save heatmap showing NOT simulatable percentage for each (original_b, cf_b) pair.
+    One heatmap per QID.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    
+    for qid in (0, 1):
+        qid_data = cf_simulatability[qid]
+        
+        if not qid_data:
+            continue
+        
+        # Get all original and CF b values
+        all_original_b = sorted(qid_data.keys())
+        all_cf_b = sorted(set(
+            cf_b for orig_data in qid_data.values() 
+            for cf_b in orig_data.keys()
+        ))
+        
+        if not all_original_b or not all_cf_b:
+            continue
+        
+        # Build matrix of NOT simulatable percentages
+        matrix = []
+        for orig_b in all_original_b:
+            row = []
+            for cf_b in all_cf_b:
+                stats = qid_data[orig_b].get(cf_b, {"simulatable": 0, "not_simulatable": 0})
+                total = stats["simulatable"] + stats["not_simulatable"]
+                
+                if total > 0:
+                    not_sim_pct = (stats["not_simulatable"] / total) * 100
+                else:
+                    not_sim_pct = 0
+                
+                row.append(not_sim_pct)
+            matrix.append(row)
+        
+        # Create heatmap
+        plt.figure(figsize=(max(14, len(all_cf_b) * 0.8), max(8, len(all_original_b) * 0.6)))
+        
+        # Create DataFrame for better labels
+        df_matrix = pd.DataFrame(matrix, index=all_original_b, columns=all_cf_b)
+        
+        sns.heatmap(
+            df_matrix,
+            annot=True,
+            fmt='.1f',
+            cmap='RdYlGn_r',  # Red = high not simulatable, Green = low not simulatable
+            vmin=0,
+            vmax=100,
+            cbar_kws={'label': 'Not Simulatable (%)'},
+            linewidths=0.5,
+            linecolor='gray'
+        )
+        
+        plt.title(f'Counterfactual Not Simulatable % | QID {qid}', fontsize=16, weight='bold', pad=15)
+        plt.xlabel('Counterfactual [b]', fontsize=13, weight='bold')
+        plt.ylabel('Original [b]', fontsize=13, weight='bold')
+        plt.xticks(rotation=45, ha='right')
+        plt.yticks(rotation=0)
+        plt.tight_layout()
+        
+        filename = f"cf_not_simulatable_heatmap_qid{qid}.png"
+        out_path = os.path.join(output_dir, filename)
+        plt.savefig(out_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        print(f"[Saved] {out_path}")
+
+
+# -----------------------------------------------
+# SNIPPET 5: Function to save grouped bar chart
+# Add this after save_cf_simulatability_heatmap()
+# -----------------------------------------------
+
+def save_cf_not_simulatable_grouped_bars(cf_simulatability, output_dir):
+    """
+    For each original [b], create a grouped bar chart showing NOT simulatable %
+    for each CF [b] option.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    
+    for qid in (0, 1):
+        qid_data = cf_simulatability[qid]
+        
+        for original_b in sorted(qid_data.keys()):
+            cf_data = qid_data[original_b]
+            
+            if not cf_data:
+                continue
+            
+            # Prepare data
+            cf_options = []
+            not_sim_percentages = []
+            
+            for cf_b in sorted(cf_data.keys()):
+                stats = cf_data[cf_b]
+                total = stats["simulatable"] + stats["not_simulatable"]
+                
+                if total > 0:
+                    not_sim_pct = (stats["not_simulatable"] / total) * 100
+                    cf_options.append(cf_b)
+                    not_sim_percentages.append(not_sim_pct)
+            
+            if not cf_options:
+                continue
+            
+            # Create bar chart
+            fig, ax = plt.subplots(figsize=(max(10, len(cf_options) * 0.5), 6))
+            
+            # Color based on percentage
+            colors = []
+            for pct in not_sim_percentages:
+                if pct >= 70:
+                    colors.append('#e74c3c')  # Red - high not simulatable
+                elif pct >= 40:
+                    colors.append('#f39c12')  # Orange
+                else:
+                    colors.append('#2ecc71')  # Green - low not simulatable
+            
+            bars = ax.bar(range(len(cf_options)), not_sim_percentages, color=colors, alpha=0.8, edgecolor='black', linewidth=1.5)
+            
+            # Add value labels on bars
+            for i, (bar, pct) in enumerate(zip(bars, not_sim_percentages)):
+                height = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width()/2., height + 1,
+                       f'{pct:.1f}%',
+                       ha='center', va='bottom', fontsize=9, weight='bold')
+            
+            ax.set_ylabel('Not Simulatable (%)', fontsize=12, weight='bold')
+            ax.set_xlabel('Counterfactual [b] Options', fontsize=12, weight='bold')
+            ax.set_title(f'Not Simulatable % for CF [b] | Original: {original_b} | QID {qid}', 
+                        fontsize=13, weight='bold')
+            ax.set_xticks(range(len(cf_options)))
+            ax.set_xticklabels(cf_options, rotation=45, ha='right')
+            ax.set_ylim(0, 105)
+            ax.axhline(y=50, color='gray', linestyle='--', alpha=0.5, linewidth=1)
+            ax.grid(axis='y', alpha=0.3)
+            
+            plt.tight_layout()
+            
+            safe_orig = original_b.replace('/', '_').replace(' ', '_').replace('-', '_')
+            filename = f"cf_not_sim_bars_{safe_orig}_qid{qid}.png"
+            out_path = os.path.join(output_dir, filename)
+            plt.savefig(out_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            
+            print(f"[Saved] {out_path}")
+
+
+
+# -----------------------------------------------
+# SNIPPET 2: Add this function after compute_simulatability_by_option()
+# -----------------------------------------------
+
+def save_simulatability_pie_charts(simulatability_stats, option_label, output_dir):
+    """
+    Save pie charts showing simulatability percentage for each option value, split by QID.
+    
+    Args:
+        simulatability_stats: dict with structure {qid: {option_value: {"simulatable": count, "not_simulatable": count}}}
+        option_label: "A" or "B"
+        output_dir: directory to save charts
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    
+    for qid in (0, 1):
+        qid_data = simulatability_stats[qid]
+        
+        # Sort options by name for consistent ordering
+        sorted_options = sorted(qid_data.keys())
+        
+        for option_val in sorted_options:
+            stats = qid_data[option_val]
+            simulatable = stats["simulatable"]
+            not_simulatable = stats["not_simulatable"]
+            total = simulatable + not_simulatable
+            
+            if total == 0:
+                continue
+            
+            # Create pie chart
+            plt.figure(figsize=(6, 6))
+            sizes = [simulatable, not_simulatable]
+            labels = [f"Simulatable ({simulatable})", f"Not Simulatable ({not_simulatable})"]
+            colors = ['#2ecc71', '#e74c3c']  # Green for simulatable, red for not
+            explode = (0.05, 0)  # Slightly separate the simulatable slice
+            
+            plt.pie(
+                sizes,
+                labels=labels,
+                autopct='%1.1f%%',
+                startangle=90,
+                colors=colors,
+                explode=explode,
+                shadow=True
+            )
+            
+            # Calculate percentage for title
+            sim_pct = (simulatable / total) * 100
+            
+            plt.title(f"Simulatability: {option_val}\nOption [{option_label}] | QID {qid} | {sim_pct:.1f}% Simulatable", 
+                     fontsize=12, weight='bold')
+            plt.tight_layout()
+            
+            # Safe filename (replace special characters)
+            safe_option_val = option_val.replace('/', '_').replace(' ', '_')
+            filename = f"simulatability_{option_label.lower()}_{safe_option_val}_qid{qid}.png"
+            out_path = os.path.join(output_dir, filename)
+            plt.savefig(out_path, dpi=300)
+            plt.close()
+            
+            print(f"[Saved] {out_path}")
+
+
+# -----------------------------------------------
+# SNIPPET 3: Add this function after save_simulatability_pie_charts()
+# -----------------------------------------------
+
+def save_simulatability_summary_charts(simulatability_stats, option_label, output_dir):
+    """
+    Save summary bar charts showing simulatability percentage for all options in one chart per QID.
+    
+    Args:
+        simulatability_stats: dict with structure {qid: {option_value: {"simulatable": count, "not_simulatable": count}}}
+        option_label: "A" or "B"
+        output_dir: directory to save charts
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    
+    for qid in (0, 1):
+        qid_data = simulatability_stats[qid]
+        
+        if not qid_data:
+            continue
+        
+        # Sort options by simulatability percentage (descending)
+        option_percentages = []
+        for option_val, stats in qid_data.items():
+            total = stats["simulatable"] + stats["not_simulatable"]
+            if total > 0:
+                pct = (stats["simulatable"] / total) * 100
+                option_percentages.append((option_val, pct, stats["simulatable"], total))
+        
+        # Sort by percentage descending
+        option_percentages.sort(key=lambda x: x[1], reverse=True)
+        
+        if not option_percentages:
+            continue
+        
+        # Extract data for plotting
+        options = [x[0] for x in option_percentages]
+        percentages = [x[1] for x in option_percentages]
+        
+        # Create horizontal bar chart
+        fig, ax = plt.subplots(figsize=(10, max(6, len(options) * 0.4)))
+        
+        # Color bars based on percentage (gradient from red to green)
+        colors = []
+        for pct in percentages:
+            if pct >= 80:
+                colors.append('#2ecc71')  # Green
+            elif pct >= 60:
+                colors.append('#f39c12')  # Orange
+            else:
+                colors.append('#e74c3c')  # Red
+        
+        bars = ax.barh(options, percentages, color=colors, alpha=0.8, edgecolor='black', linewidth=1)
+        
+        # Add percentage labels on bars
+        for i, (bar, pct) in enumerate(zip(bars, percentages)):
+            width = bar.get_width()
+            ax.text(width + 1, bar.get_y() + bar.get_height()/2, 
+                   f'{pct:.1f}%', 
+                   ha='left', va='center', fontsize=10, weight='bold')
+        
+        ax.set_xlabel('Simulatability (%)', fontsize=12, weight='bold')
+        ax.set_ylabel(f'Option [{option_label}] Values', fontsize=12, weight='bold')
+        ax.set_title(f'Simulatability by Option [{option_label}] | QID {qid}', fontsize=14, weight='bold')
+        ax.set_xlim(0, 105)
+        ax.axvline(x=50, color='gray', linestyle='--', alpha=0.5, linewidth=1)
+        ax.grid(axis='x', alpha=0.3)
+        
+        plt.tight_layout()
+        
+        filename = f"simulatability_summary_{option_label.lower()}_qid{qid}.png"
+        out_path = os.path.join(output_dir, filename)
+        plt.savefig(out_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        print(f"[Saved] {out_path}")
+        
 # ============================================
 # MAIN ANALYSIS FUNCTION
 # ============================================
@@ -750,6 +1234,76 @@ def analyze_by_type(domain='DOMAIN'):
         os.makedirs(qid_output_dir, exist_ok=True)
         save_qid_pie_charts(stats['qid_stats_A'], 'A', qid_output_dir)
         save_qid_pie_charts(stats['qid_stats_B'], 'B', qid_output_dir)
+        
+        # Compute and save simulatability pie charts
+        print("\n" + "="*60)
+        print("GENERATING SIMULATABILITY CHARTS")
+        print("="*60)
+        
+        simulatability_a, simulatability_b = compute_simulatability_by_option(grouped)
+        
+        # Create output directory for simulatability charts
+        sim_output_dir = "qid_pies"
+        os.makedirs(sim_output_dir, exist_ok=True)
+        
+        # Save individual pie charts for each option value
+        print("\nGenerating individual simulatability pie charts for Option A...")
+        save_simulatability_pie_charts(simulatability_a, 'A', sim_output_dir)
+        
+        print("\nGenerating individual simulatability pie charts for Option B...")
+        save_simulatability_pie_charts(simulatability_b, 'B', sim_output_dir)
+        
+        # Save summary bar charts
+        print("\nGenerating simulatability summary charts...")
+        save_simulatability_summary_charts(simulatability_a, 'A', sim_output_dir)
+        save_simulatability_summary_charts(simulatability_b, 'B', sim_output_dir)
+        
+        print(f"\n[Complete] All simulatability charts saved to {sim_output_dir}/")
+        
+        print("\n" + "="*60)
+        print("GENERATING SIMULATABILITY CHARTS")
+        print("="*60)
+        
+        simulatability_a, simulatability_b = compute_simulatability_by_option(grouped)
+        
+        # Create output directory for simulatability charts
+        sim_output_dir = "simulatability_charts"
+        os.makedirs(sim_output_dir, exist_ok=True)
+        
+        # Save individual pie charts for each option value
+        print("\nGenerating individual simulatability pie charts for Option A...")
+        save_simulatability_pie_charts(simulatability_a, 'A', sim_output_dir)
+        
+        print("\nGenerating individual simulatability pie charts for Option B...")
+        save_simulatability_pie_charts(simulatability_b, 'B', sim_output_dir)
+        
+        # Save summary bar charts
+        print("\nGenerating simulatability summary charts...")
+        save_simulatability_summary_charts(simulatability_a, 'A', sim_output_dir)
+        save_simulatability_summary_charts(simulatability_b, 'B', sim_output_dir)
+        
+        print(f"\n[Complete] All simulatability charts saved to {sim_output_dir}/")
+        
+        # NEW: Compute and save counterfactual-specific simulatability
+        print("\n" + "="*60)
+        print("GENERATING COUNTERFACTUAL SIMULATABILITY CHARTS")
+        print("="*60)
+        
+        cf_simulatability = compute_cf_simulatability_by_original_b(grouped)
+        
+        cf_sim_output_dir = "cf_simulatability_charts"
+        os.makedirs(cf_sim_output_dir, exist_ok=True)
+        
+        print("\nGenerating CF simulatability pie charts...")
+        save_cf_simulatability_pie_charts(cf_simulatability, cf_sim_output_dir)
+        
+        print("\nGenerating CF simulatability heatmaps...")
+        save_cf_simulatability_heatmap(cf_simulatability, cf_sim_output_dir)
+        
+        print("\nGenerating CF not simulatable grouped bar charts...")
+        save_cf_not_simulatable_grouped_bars(cf_simulatability, cf_sim_output_dir)
+        
+        print(f"\n[Complete] All CF simulatability charts saved to {cf_sim_output_dir}/")
 
 
 # Set DOMAIN as a module-level variable that can be imported
