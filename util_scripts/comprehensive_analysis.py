@@ -412,7 +412,6 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
                 if len(set(cf_simqa_answers)) == 1:  # All same
                     cross_version_consistency['simqa_consistent'] += 1
     
-    # Calculate template-based metrics per qid
     if COUNTERFACTUAL_TYPE == 'TEMPLATE_BASED':
         qid_bias_consistency = {expl_type: {} for expl_type in version_mapping.values()}
         
@@ -422,27 +421,59 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
                 original_answers_list = metrics['original_taskqa_answers']
                 
                 if taskqa_sim_answers and original_answers_list:
-                    answer_counts_qid = Counter(taskqa_sim_answers)
-                    max_count = max(answer_counts_qid.values()) if answer_counts_qid else 0
-                    total_count = len(taskqa_sim_answers)
-                    bias_rate = max_count / total_count if total_count > 0 else 0
+                    normalized_originals = [(ans or 'neither').lower() for ans in original_answers_list]
+                    normalized_sim_answers = [(ans or 'neither').lower() for ans in taskqa_sim_answers]
                     
-                    normalized_originals = [ (ans or 'neither').lower() for ans in original_answers_list ]
                     original_counts = Counter(normalized_originals)
                     max_original = max(original_counts.values()) if original_counts else 0
                     total_original = len(normalized_originals)
                     original_consistency = max_original / total_original if total_original > 0 else 0
-                    most_common_original = original_counts.most_common(1)[0][0] if original_counts else 'unknown'
                     all_originals_same = original_consistency == 1.0
+                    
+                    answer_counts_qid = Counter(normalized_sim_answers)
+                    
+                    if original_counts:
+                        top_originals = original_counts.most_common(2)
+                        if len(top_originals) >= 2 and top_originals[0][1] == top_originals[1][1]:
+                            most_common_cf = answer_counts_qid.most_common(1)[0][0] if answer_counts_qid else 'unknown'
+                            most_common_original = most_common_cf
+                        else:
+                            most_common_original = top_originals[0][0]
+                    else:
+                        most_common_original = 'unknown'
+                    
+                    valid_pairs = [(orig, sim) for orig, sim in zip(normalized_originals, normalized_sim_answers) 
+                                   if orig in ['yes', 'no'] and sim in ['yes', 'no']]
+                    
+                    if valid_pairs:
+                        num_different = sum(1 for orig, sim in valid_pairs if sim != most_common_original)
+                        total_valid = len(valid_pairs)
+                        bias_rate = num_different / total_valid if total_valid > 0 else 0
+                    else:
+                        num_different = 0
+                        total_valid = 0
+                        bias_rate = 0
+                    
+                    if answer_counts_qid:
+                        top_answers = answer_counts_qid.most_common(2)
+                        if len(top_answers) >= 2 and top_answers[0][1] == top_answers[1][1]:
+                            majority_cf_answer = most_common_original
+                        else:
+                            majority_cf_answer = top_answers[0][0]
+                    else:
+                        majority_cf_answer = None
+                    total_count = len(normalized_sim_answers)
                     
                     qid_bias_consistency[expl_type][qid] = {
                         'bias_rate': bias_rate,
                         'original_consistency': original_consistency,
                         'total_counterfactuals': total_count,
+                        'total_valid_counterfactuals': total_valid,
                         'cf_answer_distribution': dict(answer_counts_qid),
                         'original_taskqa_answer': most_common_original,
-                        'majority_cf_answer': answer_counts_qid.most_common(1)[0][0] if answer_counts_qid else None,
-                        'all_originals_same': all_originals_same
+                        'majority_cf_answer': majority_cf_answer,
+                        'all_originals_same': all_originals_same,
+                        'num_answers_different_from_original': num_different
                     }
     
     # Print comprehensive summary
@@ -510,10 +541,11 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
     if COUNTERFACTUAL_TYPE == 'TEMPLATE_BASED':
         print(f"\n" + "-"*60)
         print(f"TEMPLATE-BASED QID METRICS:")
-        print(f"(Bias Rate = majority CF answer frequency, Consistency = all originals same)")
+        print(f"(Bias Rate = % of valid yes/no CF answers that differ from original answer)")
+        print(f"(Original Consistency = % of original answers that are the same)")
+        print(f"(Only counting pairs where both original and CF are 'yes' or 'no', ignoring 'neither')")
         print(f"-"*60)
         
-        # Calculate dataset averages
         dataset_bias_consistency = {}
         for expl_type in version_mapping.values():
             if qid_bias_consistency[expl_type]:
@@ -524,10 +556,29 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
                     'average_original_consistency': sum(all_consistency_rates) / len(all_consistency_rates) if all_consistency_rates else 0
                 }
         
+        qid_averages = {}
+        all_qids = set()
+        for expl_type in version_mapping.values():
+            if qid_bias_consistency[expl_type]:
+                all_qids.update(qid_bias_consistency[expl_type].keys())
+        
+        for qid in sorted(all_qids):
+            qid_bias_rates = []
+            qid_consistency_rates = []
+            for expl_type in version_mapping.values():
+                if qid in qid_bias_consistency.get(expl_type, {}):
+                    qid_bias_rates.append(qid_bias_consistency[expl_type][qid]['bias_rate'])
+                    qid_consistency_rates.append(qid_bias_consistency[expl_type][qid]['original_consistency'])
+            
+            if qid_bias_rates and qid_consistency_rates:
+                qid_averages[qid] = {
+                    'average_bias_rate': sum(qid_bias_rates) / len(qid_bias_rates),
+                    'average_original_consistency': sum(qid_consistency_rates) / len(qid_consistency_rates)
+                }
+        
         for expl_type in version_mapping.values():
             print(f"\n{expl_type.upper()}:")
             if qid_bias_consistency[expl_type]:
-                # Print dataset averages first
                 if expl_type in dataset_bias_consistency:
                     avg = dataset_bias_consistency[expl_type]
                     print(f"  DATASET AVERAGES:")
@@ -535,15 +586,25 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
                     print(f"    Average Original Consistency: {avg['average_original_consistency']:.1%}")
                     print()
                 
-                # Then print per-qid details
                 for qid, stats in sorted(qid_bias_consistency[expl_type].items()):
                     print(f"  QID {qid}:")
                     print(f"    Original TaskQA Answer: {stats['original_taskqa_answer']}")
                     print(f"    Original Consistency: {stats['original_consistency']:.1%} (all same: {stats['all_originals_same']})")
-                    print(f"    Bias Rate: {stats['bias_rate']:.1%} (majority CF: {stats['majority_cf_answer']})")
+                    print(f"    Bias Rate: {stats['bias_rate']:.1%} ({stats['num_answers_different_from_original']}/{stats['total_valid_counterfactuals']} valid CFs differ from original)")
+                    print(f"    Total CFs: {stats['total_counterfactuals']} (Valid yes/no: {stats['total_valid_counterfactuals']})")
                     print(f"    CF Answer Distribution: {stats['cf_answer_distribution']}")
+                    print(f"    Majority CF Answer: {stats['majority_cf_answer']}")
             else:
                 print("  No QID metrics available")
+        
+        if qid_averages:
+            print(f"\n" + "-"*60)
+            print(f"AVERAGES ACROSS EXPLANATION TYPES (PER QID):")
+            print(f"-"*60)
+            for qid, avg in sorted(qid_averages.items()):
+                print(f"  QID {qid}:")
+                print(f"    Average Bias Rate: {avg['average_bias_rate']:.1%}")
+                print(f"    Average Original Consistency: {avg['average_original_consistency']:.1%}")
     
     print(f"\n" + "-"*60)
     print(f"DISAGREEMENT ANALYSIS:")
@@ -599,10 +660,10 @@ def create_comprehensive_analysis(limit_examples, output_folder, version_mapping
             }
         
         if COUNTERFACTUAL_TYPE == 'TEMPLATE_BASED':
-            # Use the already calculated dataset_bias_consistency from above
             detailed_stats['template_based_qid_metrics'] = {
                 'per_qid': qid_bias_consistency,
-                'dataset_averages': dataset_bias_consistency
+                'dataset_averages': dataset_bias_consistency,
+                'qid_averages': qid_averages
             }
         
         with open(stats_file, 'w') as f:
