@@ -20,19 +20,20 @@ COUNTERFACTUAL_TYPE = GENERAL_CONFIGS['counterfactuals']
 #   TEMPLATE_BASED: "harmful-requests_mistral.mistral-7b-instruct-v0:2_1_counterfactuals_TEMPLATE_BASED"
 #   LABEL_BALANCED: "harmful-requests_meta-llama_200"
 # OUTPUT_FOLDER = "harmful-requests_mistral.mistral-7b-instruct-v0:2_1_counterfactuals_TEMPLATE_BASED"
-OUTPUT_FOLDER = "harmful-requests_llama3-2-90b-instruct_30_counterfactuals_TEMPLATE_BASED"
+OUTPUT_FOLDER = "sycophancy_llama3-2-90b-instruct_30_counterfactuals_TEMPLATE_BASED"
+# Number of examples to analyze
 LIMIT_EXAMPLES = GENERAL_CONFIGS['num_examples']
 
 # Version to explanation type mapping
 VERSION_MAPPING = {
-    'v1': 'biased',
-    'v2': 'cot',
-    'v3': 'nonbiased',
-    'v4': 'concise',
-    'v5': 'detailed',
-    'v6': 'toxic',
-    'v7': 'nontoxic',
-    'v8': 'noexpl'
+    # 'v1': 'noexpl',
+    # 'v2': 'cot',
+    # 'v3': 'detailed',
+    # 'v4': 'concise',
+    # 'v5': 'toxic',
+    # 'v6': 'nontoxic',
+    'v7': 'biased',
+    'v8': 'nonbiased',
 }
 
 # Disagreement dataset path (only used for LABEL_BALANCED, not for TEMPLATE_BASED)
