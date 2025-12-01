@@ -1294,8 +1294,8 @@ def analyze_by_type(domain='DOMAIN'):
         cf_sim_output_dir = "cf_simulatability_charts"
         os.makedirs(cf_sim_output_dir, exist_ok=True)
         
-        print("\nGenerating CF simulatability pie charts...")
-        save_cf_simulatability_pie_charts(cf_simulatability, cf_sim_output_dir)
+        # print("\nGenerating CF simulatability pie charts...")
+        # save_cf_simulatability_pie_charts(cf_simulatability, cf_sim_output_dir)
         
         print("\nGenerating CF simulatability heatmaps...")
         save_cf_simulatability_heatmap(cf_simulatability, cf_sim_output_dir)
