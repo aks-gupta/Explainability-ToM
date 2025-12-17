@@ -17,12 +17,12 @@
       "v8": "noexpl"
     },
     "counterfactual_type": "TEMPLATE_BASED",
-    "analysis_timestamp": "2025-12-16T20:38:41.645317"
+    "analysis_timestamp": "2025-12-01T00:22:56.293994"
   },
   "basic_stats": {
     "total_comparisons": 3360,
-    "total_agreements": 2961,
-    "overall_agreement_rate": 88.125,
+    "total_agreements": 2938,
+    "overall_agreement_rate": 87.44047619047619,
     "agreement_by_type": {
       "biased": {
         "agreements": 341,
@@ -30,34 +30,34 @@
         "rate": 81.19047619047619
       },
       "cot": {
-        "agreements": 363,
+        "agreements": 362,
         "total": 420,
-        "rate": 86.42857142857143
+        "rate": 86.19047619047619
       },
       "nonbiased": {
-        "agreements": 383,
+        "agreements": 380,
         "total": 420,
-        "rate": 91.19047619047619
+        "rate": 90.47619047619048
       },
       "concise": {
-        "agreements": 371,
+        "agreements": 369,
         "total": 420,
-        "rate": 88.33333333333333
+        "rate": 87.85714285714286
       },
       "detailed": {
-        "agreements": 376,
+        "agreements": 366,
         "total": 420,
-        "rate": 89.52380952380953
+        "rate": 87.14285714285714
       },
       "toxic": {
-        "agreements": 375,
+        "agreements": 373,
         "total": 420,
-        "rate": 89.28571428571429
+        "rate": 88.80952380952381
       },
       "nontoxic": {
-        "agreements": 379,
+        "agreements": 374,
         "total": 420,
-        "rate": 90.23809523809524
+        "rate": 89.04761904761904
       },
       "noexpl": {
         "agreements": 373,
@@ -96,9 +96,9 @@
         "neither": 0
       },
       "simqa": {
-        "yes": 185,
+        "yes": 183,
         "no": 235,
-        "neither": 0
+        "neither": 2
       }
     },
     "nonbiased": {
@@ -113,9 +113,9 @@
         "neither": 0
       },
       "simqa": {
-        "yes": 177,
+        "yes": 174,
         "no": 243,
-        "neither": 0
+        "neither": 3
       }
     },
     "concise": {
@@ -130,9 +130,9 @@
         "neither": 10
       },
       "simqa": {
-        "yes": 176,
+        "yes": 174,
         "no": 244,
-        "neither": 0
+        "neither": 2
       }
     },
     "detailed": {
@@ -147,9 +147,9 @@
         "neither": 0
       },
       "simqa": {
-        "yes": 200,
+        "yes": 190,
         "no": 220,
-        "neither": 0
+        "neither": 10
       }
     },
     "toxic": {
@@ -164,9 +164,9 @@
         "neither": 0
       },
       "simqa": {
-        "yes": 184,
+        "yes": 181,
         "no": 236,
-        "neither": 0
+        "neither": 3
       }
     },
     "nontoxic": {
@@ -181,9 +181,9 @@
         "neither": 0
       },
       "simqa": {
-        "yes": 204,
+        "yes": 198,
         "no": 216,
-        "neither": 0
+        "neither": 6
       }
     },
     "noexpl": {
@@ -207,7 +207,7 @@
   "cross_version_consistency": {
     "original_taskqa_consistent": 294,
     "taskqa_sim_consistent": 274,
-    "simqa_consistent": 281,
+    "simqa_consistent": 270,
     "total_cross_version_comparisons": 420
   },
   "disagreement_patterns": {
@@ -216,29 +216,38 @@
       "TaskQA-sim=yes, SimQA=no": 34
     },
     "cot": {
-      "TaskQA-sim=no, SimQA=yes": 32,
-      "TaskQA-sim=yes, SimQA=no": 25
+      "TaskQA-sim=no, SimQA=yes": 31,
+      "TaskQA-sim=yes, SimQA=no": 25,
+      "TaskQA-sim=no, SimQA=neither": 1,
+      "TaskQA-sim=yes, SimQA=neither": 1
     },
     "nonbiased": {
       "TaskQA-sim=yes, SimQA=no": 35,
+      "TaskQA-sim=yes, SimQA=neither": 3,
       "TaskQA-sim=no, SimQA=yes": 2
     },
     "concise": {
       "TaskQA-sim=yes, SimQA=no": 25,
       "TaskQA-sim=no, SimQA=yes": 14,
+      "TaskQA-sim=yes, SimQA=neither": 2,
       "TaskQA-sim=neither, SimQA=no": 10
     },
     "detailed": {
       "TaskQA-sim=no, SimQA=yes": 18,
-      "TaskQA-sim=yes, SimQA=no": 26
+      "TaskQA-sim=yes, SimQA=no": 26,
+      "TaskQA-sim=yes, SimQA=neither": 10
     },
     "toxic": {
-      "TaskQA-sim=no, SimQA=yes": 10,
-      "TaskQA-sim=yes, SimQA=no": 35
+      "TaskQA-sim=no, SimQA=yes": 9,
+      "TaskQA-sim=yes, SimQA=no": 35,
+      "TaskQA-sim=yes, SimQA=neither": 2,
+      "TaskQA-sim=no, SimQA=neither": 1
     },
     "nontoxic": {
-      "TaskQA-sim=no, SimQA=yes": 9,
-      "TaskQA-sim=yes, SimQA=no": 32
+      "TaskQA-sim=no, SimQA=yes": 8,
+      "TaskQA-sim=yes, SimQA=no": 32,
+      "TaskQA-sim=yes, SimQA=neither": 5,
+      "TaskQA-sim=no, SimQA=neither": 1
     },
     "noexpl": {
       "TaskQA-sim=yes, SimQA=no": 47
