@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 import pickle as pkl
 
-DATASET_FOLDER = "harmful-requests_llama3-2-90b-instruct_30_counterfactuals_TEMPLATE_BASED"
+DATASET_FOLDER = "sycophancy_llama3-2-90b-instruct_30_counterfactuals_TEMPLATE_BASED"
 
 def extract_answer_from_text(text):
     if not text or not isinstance(text, str):
@@ -35,8 +35,8 @@ def fix_nested_dict(obj, path="", fixed_count=0, total_neither=0):
         for key, value in obj.items():
             new_path = f"{path}.{key}" if path else key
             
-            if key.endswith('_answer') and value == 'neither':
-                expl_key = key.replace('_answer', '_explanation')
+            if key.endswith('_ans') and value == 'neither':
+                expl_key = key.replace('_ans', '_expl')
                 if expl_key in obj and obj[expl_key]:
                     total_neither += 1
                     extracted = extract_answer_from_text(obj[expl_key])
@@ -186,6 +186,7 @@ def process_single_dataset(dataset_path):
         version_fixed = 0
         
         for json_file in json_files:
+            print(f"    🔍 Checking file: {json_file.name}")
             if 'precision' in json_file.name or 'count' in json_file.name:
                 continue
             
